@@ -28,6 +28,7 @@ freely, subject to the following restrictions:
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #define HEX_HEIGHT_ADJUST .86330935
 
