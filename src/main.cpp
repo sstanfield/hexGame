@@ -24,7 +24,6 @@ freely, subject to the following restrictions:
 #include "render/pc/GL/glew.h"
 #include "render/imageutils.h"
 #include "render/maprender.h"
-#include "render/rendertext.h"
 #include "util/string.h"
 #include "GLFW/glfw3.h"
 
@@ -38,9 +37,6 @@ freely, subject to the following restrictions:
 static bool running = true;
 static Map *map;
 static MapRenderer maprenderer;
-static FontContext font1;
-static FontContext font2;
-static FontContext font3;
 //static Unit *u1;
 
 static uint turn = 1;
@@ -73,10 +69,6 @@ static void init(GLFWwindow *window) {
 	printf("XXX w: %d h: %d\n", width, height);
 	maprenderer = initMapRender(map, width, height, assetDir);
 	resizeMap(maprenderer, width, height);
-	char strBuf[512];
-	font1 = renderTextInit(strAdd(strBuf, 512, assetDir, "fonts/DroidSerif-BoldItalic.ttf"), 56/*112*/, assetDir);
-//	font2 = renderTextInit(strAdd(strBuf, 512, assetDir, "fonts/DroidSansMono.ttf"), 128, assetDir);
-//	font3 = renderTextInit(strAdd(strBuf, 512, assetDir, "fonts/DroidSans.ttf"), 128, assetDir);
 }
 
 static void render(GLFWwindow *window) {
@@ -86,27 +78,12 @@ static void render(GLFWwindow *window) {
 	renderMap(maprenderer, FALSE);  // Main map.
 	renderMap(maprenderer, TRUE);   // Mini map.
 
-//	float black[] = {0, 0, 0, 1};
-	if (map->selectedUnit) {
+	/*if (map->selectedUnit) {
 		float red[] = {1, 0, 0, 1};
 		char str[100];
 		snprintf(str, 199, "%d", map->tiles[map->row][map->col].currentMoveCost);
 		float w, h;
-		renderTextSize(font1, str, .1, &w, &h);
-		renderText(font1, str, 0 - (w / 2.0f), -1.0 + (h), .1, red);
-	}
-	//	char *str = "SLS (sls) [I i] `was_ here ghysj";
-////	char *str = "TESTING, 1, 2, 3, TESTING AJGSB";
-//	float w, h;
-
-//	renderTextSize(font1, str, .1, &w, &h);
-//	renderText(font1, str, 0 - (w / 2.0f), .5, .1, red);
-//	renderText(font2, str, -.9, .1, .1, red);
-//	renderText(font2, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", -.9, 0, .1, red);
-////	red[3] = .5;
-//	renderText(font2, "abcdefghijklmnopqrstuvwxyz", -.9, -.1, .1, red);
-//	renderTextSize(font3, str, .1, &w, &h);
-//	renderText(font3, str, 0 - (w / 2.0f), -.5, .1, red);
+	}*/
 
 //	saveMiniMap(maprenderer);
 //	saveMiniMap(maprenderer);
