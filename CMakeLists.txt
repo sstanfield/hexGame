@@ -63,6 +63,7 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 list(APPEND SOURCE_FILES ${PLATFORM_SOURCE_FILES})
 
 include_directories(glfw/include)
+include_directories(src/render/pc)
 
 add_executable(hexGame ${SOURCE_FILES})
 
