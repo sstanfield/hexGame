@@ -44,6 +44,7 @@ GLuint LoadShaders(const char *vertex_shader,const char *fragment_shader) {
 	glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
 	glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	char VertexShaderErrorMessage[InfoLogLength];
+	VertexShaderErrorMessage[0] = 0;
 	glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, VertexShaderErrorMessage);
 	if (VertexShaderErrorMessage[0]) fprintf(stdout, "%s\n", VertexShaderErrorMessage);
 
@@ -57,6 +58,7 @@ GLuint LoadShaders(const char *vertex_shader,const char *fragment_shader) {
 	glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
 	glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	char FragmentShaderErrorMessage[InfoLogLength];
+	FragmentShaderErrorMessage[0] = 0;
 	glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, FragmentShaderErrorMessage);
 	if (FragmentShaderErrorMessage[0]) fprintf(stdout, "%s\n", FragmentShaderErrorMessage);
 
@@ -71,6 +73,7 @@ GLuint LoadShaders(const char *vertex_shader,const char *fragment_shader) {
 	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
 	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	char ProgramErrorMessage[ InfoLogLength<1?1:InfoLogLength ];
+	ProgramErrorMessage[0] = 0;
 	glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, ProgramErrorMessage);
 	if (ProgramErrorMessage[0]) fprintf(stdout, "%s\n", ProgramErrorMessage);
 
