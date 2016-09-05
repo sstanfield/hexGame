@@ -7,7 +7,7 @@ find_package(OpenGL REQUIRED)
 list(APPEND EXTRA_LIBS ${OPENGL_LIBRARY})
 
 if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU" OR ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -fno-exceptions -fno-rtti -Wall -Wextra -Wno-unused-parameter")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -fno-exceptions -fno-rtti -Wall -Wextra -Wno-unused-parameter")
 	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -std=c++11 -fno-exceptions -fno-rtti -Wall -Wextra -Wno-unused-parameter")
 	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_DEBUG} -O3 -Wall -Wextra -Wno-unused-parameter")
 	SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -Wall -Wextra -Wno-unused-parameter")
@@ -19,6 +19,13 @@ file(GLOB SOURCE_FILES
 	src/util/*.cpp src/util/*.c src/util/*.h
 	src/render/*.cpp src/render/*.c src/render/*.h
 	src/render/pc/glew.c
+	src/gui/*.cpp
+	src/tb/*.cpp
+	src/tb/image/*.cpp
+	src/tb/animation/*.cpp
+	src/tb/parser/*.cpp
+	src/tb/renderers/*.cpp
+	src/tb/utf8/*.cpp
 )
 
 
