@@ -26,6 +26,7 @@ file(GLOB SOURCE_FILES
 	src/tb/parser/*.cpp
 	src/tb/renderers/*.cpp
 	src/tb/utf8/*.cpp
+	src/lua/*.c
 )
 
 
