@@ -20,12 +20,12 @@ file(GLOB SOURCE_FILES
 	src/render/*.cpp src/render/*.c src/render/*.h
 	src/render/pc/glew.c
 	src/gui/*.cpp
-	src/tb/*.cpp
-	src/tb/image/*.cpp
-	src/tb/animation/*.cpp
-	src/tb/parser/*.cpp
-	src/tb/renderers/*.cpp
-	src/tb/utf8/*.cpp
+	src/gui/tb/*.cpp
+	src/gui/tb/image/*.cpp
+	src/gui/tb/animation/*.cpp
+	src/gui/tb/parser/*.cpp
+	src/gui/tb/renderers/*.cpp
+	src/gui/tb/utf8/*.cpp
 	src/lua/*.c
 )
 
@@ -70,8 +70,10 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 list(APPEND SOURCE_FILES ${PLATFORM_SOURCE_FILES})
 
+include_directories(src)
 include_directories(glfw/include)
 include_directories(src/render/pc)
+include_directories(src/gui/tb)
 
 add_executable(hexGame ${SOURCE_FILES})
 

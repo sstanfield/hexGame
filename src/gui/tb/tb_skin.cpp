@@ -166,6 +166,7 @@ bool TBSkin::LoadInternal(const char *skin_file)
 					    (candidate_dpi < screen_dpi &&
 					     ABS(candidate_dpi - screen_dpi) < ABS(best_supported_dpi - screen_dpi))) {
 						best_supported_dpi = candidate_dpi;
+					}
 				}
 				supported_dpi = best_supported_dpi;
 			}
