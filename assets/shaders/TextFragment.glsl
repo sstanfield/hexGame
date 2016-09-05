@@ -9,7 +9,7 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	vec4 texcolor = texture2D(Texture0, oTexCoord);
+	vec4 texcolor = texture(Texture0, oTexCoord);
 	if (texcolor.r >= .48) {
 		float alpha = smoothstep(.48, .52, texcolor.r);
 		if (texcolor.r < .51) {

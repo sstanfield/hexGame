@@ -8,5 +8,5 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	outColor = texture2D(Texture0, oTexCoord);
+	outColor = texture(Texture0, oTexCoord);
 }

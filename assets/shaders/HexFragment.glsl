@@ -12,7 +12,7 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	vec4 tilecolor = texture2D(Texture0, oTexCoord);
+	vec4 tilecolor = texture(Texture0, oTexCoord);
 	if (useBorder == 1 && oBarryCoord.y > borderThickness) {
 		outColor = borderColor;
 	} else {
