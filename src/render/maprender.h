@@ -31,7 +31,7 @@ extern "C" {
 
 typedef void *MapRenderer;
 
-MapRenderer initMapRender(Map *map, int width, int height, char *assetDir);
+MapRenderer initMapRender(Map *map, int width, int height, const char *assetDir);
 void resizeMap(MapRenderer mapctx, int width, int height);
 void renderMap(MapRenderer mapctx, Bool mini);
 void miniMapDirty(MapRenderer mapctx);

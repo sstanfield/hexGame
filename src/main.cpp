@@ -20,12 +20,15 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source
    distribution.
 */
+#include "Application.h"
 #include "render/shaders.h"
 #include "render/pc/GL/glew.h"
 #include "render/imageutils.h"
 #include "render/maprender.h"
 #include "util/string.h"
 #include "GLFW/glfw3.h"
+#include "tb_widgets.h"
+#include "settings.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,17 +47,14 @@ static uint turn = 1;
 
 static char *assetDir;
 
-static GLuint genBuffer(const GLfloat *buffer, int size) {
-	GLuint bufferID;
-	// Generate 1 buffer, put the resulting identifier in vertexbuffer
-	glGenBuffers(1, &bufferID);
+using namespace hexgame;
 
-	// The following commands will talk about our 'vertexbuffer' buffer
-	glBindBuffer(GL_ARRAY_BUFFER, bufferID);
-
-	// Give our vertices to OpenGL.
-	glBufferData(GL_ARRAY_BUFFER, size, buffer, GL_STATIC_DRAW);
-	return bufferID;
+static void getScaleFactors(GLFWwindow *window, double *scaleWidth, double *scaleHeight) {
+	int fwidth = 1, fheight = 1, swidth = 1, sheight = 1;
+	glfwGetFramebufferSize(window, &fwidth, &fheight);
+	glfwGetWindowSize(window, &swidth, &sheight);
+	*scaleWidth = (double)fwidth / (double)swidth;
+	*scaleHeight = (double)fheight / (double)sheight;
 }
 
 static void init(GLFWwindow *window) {
@@ -164,22 +164,118 @@ static void moveDown() {
 	}
 }
 
+static bool key_alt = false;
+static bool key_ctrl = false;
+static bool key_shift = false;
+static bool key_super = false;
+
+static tb::MODIFIER_KEYS GetModifierKeys() {
+	tb::MODIFIER_KEYS code = tb::TB_MODIFIER_NONE;
+	if (key_alt)	code |= tb::TB_ALT;
+	if (key_ctrl)	code |= tb::TB_CTRL;
+	if (key_shift)	code |= tb::TB_SHIFT;
+	if (key_super)	code |= tb::TB_SUPER;
+	return code;
+}
+
+static tb::MODIFIER_KEYS GetModifierKeys(int glfwmod) {
+	tb::MODIFIER_KEYS code = tb::TB_MODIFIER_NONE;
+	// Re-sync key flags, going fullscreen can cause these to be missed.
+	key_alt = key_ctrl = key_shift = key_super = false;
+	if (glfwmod & GLFW_MOD_ALT)		{ code |= tb::TB_ALT; key_alt = true; }
+	if (glfwmod & GLFW_MOD_CONTROL)	{ code |= tb::TB_CTRL; key_ctrl = true; }
+	if (glfwmod & GLFW_MOD_SHIFT)	{ code |= tb::TB_SHIFT; key_shift = true; }
+	if (glfwmod & GLFW_MOD_SUPER)	{ code |= tb::TB_SUPER; key_super = true; }
+	return code;
+}
+
+static bool InvokeKey(unsigned int key, tb::SPECIAL_KEY special_key,
+                   tb::MODIFIER_KEYS modifierkeys, bool down) {
+	return Application::instance()->InvokeKey(key, special_key, modifierkeys, down);
+}
+
+static bool doKey(int key, unsigned long metaKeys, bool down) {
+	bool ret = false;
+	tb::MODIFIER_KEYS modifier = GetModifierKeys(metaKeys);
+	switch (key)
+	{
+		case GLFW_KEY_F1:		ret = InvokeKey(0, tb::TB_KEY_F1, modifier, down); break;
+		case GLFW_KEY_F2:		ret = InvokeKey(0, tb::TB_KEY_F2, modifier, down); break;
+		case GLFW_KEY_F3:		ret = InvokeKey(0, tb::TB_KEY_F3, modifier, down); break;
+		case GLFW_KEY_F4:		ret = InvokeKey(0, tb::TB_KEY_F4, modifier, down); break;
+		case GLFW_KEY_F5:		ret = InvokeKey(0, tb::TB_KEY_F5, modifier, down); break;
+		case GLFW_KEY_F6:		ret = InvokeKey(0, tb::TB_KEY_F6, modifier, down); break;
+		case GLFW_KEY_F7:		ret = InvokeKey(0, tb::TB_KEY_F7, modifier, down); break;
+		case GLFW_KEY_F8:		ret = InvokeKey(0, tb::TB_KEY_F8, modifier, down); break;
+		case GLFW_KEY_F9:		ret = InvokeKey(0, tb::TB_KEY_F9, modifier, down); break;
+		case GLFW_KEY_F10:		ret = InvokeKey(0, tb::TB_KEY_F10, modifier, down); break;
+		case GLFW_KEY_F11:		ret = InvokeKey(0, tb::TB_KEY_F11, modifier, down); break;
+		case GLFW_KEY_F12:		ret = InvokeKey(0, tb::TB_KEY_F12, modifier, down); break;
+		case GLFW_KEY_LEFT:		ret = InvokeKey(0, tb::TB_KEY_LEFT, modifier, down); break;
+		case GLFW_KEY_UP:		ret = InvokeKey(0, tb::TB_KEY_UP, modifier, down); break;
+		case GLFW_KEY_RIGHT:		ret = InvokeKey(0, tb::TB_KEY_RIGHT, modifier, down); break;
+		case GLFW_KEY_DOWN:		ret = InvokeKey(0, tb::TB_KEY_DOWN, modifier, down); break;
+		case GLFW_KEY_PAGE_UP:	ret = InvokeKey(0, tb::TB_KEY_PAGE_UP, modifier, down); break;
+		case GLFW_KEY_PAGE_DOWN:	ret = InvokeKey(0, tb::TB_KEY_PAGE_DOWN, modifier, down); break;
+		case GLFW_KEY_HOME:		ret = InvokeKey(0, tb::TB_KEY_HOME, modifier, down); break;
+		case GLFW_KEY_END:		ret = InvokeKey(0, tb::TB_KEY_END, modifier, down); break;
+		case GLFW_KEY_INSERT:	ret = InvokeKey(0, tb::TB_KEY_INSERT, modifier, down); break;
+		case GLFW_KEY_TAB:		ret = InvokeKey(0, tb::TB_KEY_TAB, modifier, down); break;
+		case GLFW_KEY_DELETE:	ret = InvokeKey(0, tb::TB_KEY_DELETE, modifier, down); break;
+		case GLFW_KEY_BACKSPACE:	ret = InvokeKey(0, tb::TB_KEY_BACKSPACE, modifier, down); break;
+		case GLFW_KEY_ENTER:		
+		case GLFW_KEY_KP_ENTER:	ret = InvokeKey(0, tb::TB_KEY_ENTER, modifier, down); break;
+		case GLFW_KEY_ESCAPE:		
+			ret = InvokeKey(0, tb::TB_KEY_ESC, modifier, down);
+			break;
+		case GLFW_KEY_MENU:
+			if (!down) {
+				tb::TBWidgetEvent ev(tb::EVENT_TYPE_CONTEXT_MENU);
+				ev.modifierkeys = modifier;
+				if (tb::TBWidget::focused_widget) tb::TBWidget::focused_widget->InvokeEvent(ev);
+				else Application::instance()->getRootWidget()->InvokeEvent(ev);
+			}
+			break;
+		case GLFW_KEY_LEFT_SHIFT:
+		case GLFW_KEY_RIGHT_SHIFT:
+			key_shift = down;
+			break;
+		case GLFW_KEY_LEFT_CONTROL:
+		case GLFW_KEY_RIGHT_CONTROL:
+			key_ctrl = down;
+			break;
+		case GLFW_KEY_LEFT_ALT:
+		case GLFW_KEY_RIGHT_ALT:
+			key_alt = down;
+			break;
+		case GLFW_KEY_LEFT_SUPER:
+		case GLFW_KEY_RIGHT_SUPER:
+			key_super = down;
+			break;
+		default:
+			// glfw calls key_callback instead of char_callback
+			// when pressing a character while ctrl or alt is also pressed.
+			if ((key_ctrl || key_alt) && key >= 32 && key <= 255) {
+				ret = InvokeKey(key, tb::TB_KEY_UNDEFINED, modifier, down);
+			}
+			break;
+	}
+	return ret;
+}
+
 static void char_callback(GLFWwindow *window, unsigned int character)
 {
+	InvokeKey(character, tb::TB_KEY_UNDEFINED, GetModifierKeys(), true);
+	InvokeKey(character, tb::TB_KEY_UNDEFINED, GetModifierKeys(), false);
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	//printf("XXX key_callback %c, %d, %d\n", key, key, scancode);
 	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-		int centerRow, centerCol, rowsDisplayed, colsDisplayed;
+		doKey(key, mods, true);
+		/*int centerRow, centerCol, rowsDisplayed, colsDisplayed;
 		switch (key) {
-			case GLFW_KEY_F11:
-				//loWtoggleFullscreen(ctx);
-				break;
-			case GLFW_KEY_Q:
-				if (mods & GLFW_MOD_CONTROL) running = false;
-				break;
 			case GLFW_KEY_G:
 				map->tiles[map->row][map->col].type = Grass;
 				if (map->selectedUnit) selectUnit(map, map->selectedUnit);
@@ -255,9 +351,10 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 					setMapDisplayCenter(maprenderer, centerRow, map->col);
 				}
 				break;
-		}
+		}*/
 	}
 	if (action == GLFW_RELEASE) {
+		doKey(key, mods, false);
 	}
 }
 
@@ -344,6 +441,11 @@ static void refresh_callback(GLFWwindow* window) {
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	resizeMap(maprenderer, width, height);
+	double sw, sx;
+	Application *app = Application::instance();
+	app->setWindowSize(width, height);
+	getScaleFactors(window, &sw, &sx);
+	app->setScaleFactors(sw, sx);
 	//setWindowWH(width, height);
 }
 
@@ -446,6 +548,21 @@ static GLFWwindow *openWindow(int width, int height,
 		//std::cout << "GL Error init 1- "<<std::hex<<err2<<"\n";
 	}
 	printf("Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
+	int w, h;
+	glfwGetFramebufferSize(window, &w, &h);
+	Application *app = Application::newInstance(w, h);
+	if (!app) {
+		printf("ERROR creating app.\n");
+		glfwTerminate();
+		return nullptr;
+	}
+	double sw, sx;
+	getScaleFactors(window, &sw, &sx);
+	app->setScaleFactors(sw, sx);
+	app->setQuit([] () {
+		printf("XXX quit\n");
+		running = false;
+	});
 	//_dpi = getCurrentDPI();
 	return window;
 }
@@ -474,6 +591,7 @@ void parseCommandLine(int argc, char *argv[]) {
 		assetDir[i+8]='t'; assetDir[i+9]='s'; assetDir[i+10]='/';
 		assetDir[i+11] = 0;
 	}
+	Settings::i()->setAssetDir(assetDir);
 }
 
 int main(int argc, char *argv[]) {

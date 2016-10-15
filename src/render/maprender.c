@@ -149,7 +149,7 @@ static GLuint genBuffer(const GLfloat *buffer, int size) {
 	return bufferID;
 }
 
-MapRenderer initMapRender(Map *map, int width, int height, char *assetDir) {
+MapRenderer initMapRender(Map *map, int width, int height, const char *assetDir) {
 	_MapRenderer *mr = (_MapRenderer *)malloc(sizeof(_MapRenderer));
 	char strBuf[512];
 	char strFrag[512];
@@ -879,6 +879,7 @@ void zoomOutMap(MapRenderer mapctx) {
 
 void freeMapRenderer(MapRenderer mapctx) {
 	_MapRenderer *mrend = (_MapRenderer *)mapctx;
+	if (!mrend) return;
 	glDeleteBuffers(1, &mrend->squarevertexbuffer);
 	glDeleteBuffers(1, &mrend->squareuvbuffer);
 	glDeleteBuffers(1, &mrend->hexvertexbuffer);
