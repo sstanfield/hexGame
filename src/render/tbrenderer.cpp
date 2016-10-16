@@ -5,8 +5,9 @@
 
 #include "tbrenderer.h"
 
-#include "render/pc/GL/glew.h"
-#include "render/glcapabilities.h"
+#include "pc/GL/glew.h"
+#include "glcapabilities.h"
+#include "gl_util.h"
 
 #include "tb_bitmap_fragment.h"
 #include "tb_system.h"
@@ -14,7 +15,7 @@
 #include "glm/mat4x4.hpp" // glm::mat4
 #include "glm/gtc/matrix_transform.hpp" // glm::translate, glm::rotate, glm::scale, glm::perspective
 #include "settings.h"
-#include "render/shaders.h"
+#include "shaders.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -60,6 +61,7 @@ bool TBBitmap::Init(int width, int height, tb::uint32 *data)
 	m_w = width;
 	m_h = height;
 
+	doGLError("TBBitmap::Init 1");
 	glGenTextures(1, &m_texture);
 	BindBitmap(this);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -67,6 +69,7 @@ bool TBBitmap::Init(int width, int height, tb::uint32 *data)
 
 	SetData(data);
 
+	doGLError("TBBitmap::Init");
 	return true;
 }
 
@@ -75,6 +78,7 @@ void TBBitmap::SetData(tb::uint32 *data)
 	m_renderer->FlushBitmap(this);
 	BindBitmap(this);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_w, m_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	doGLError("TBBitmap::SetData");
 }
 
 // == TBRenderer ================================================================================
@@ -86,12 +90,13 @@ TBRenderer::TBRenderer()
 }
 
 void TBRenderer::initGL() {
-	shaders = LoadShadersFromFile((*Settings::i()->getAssetDir() + "shaders/tbVert.glsl").c_str(),
-	                              (*Settings::i()->getAssetDir() + "shaders/tbFrag.glsl").c_str());
-	mvp_handle = glGetUniformLocation(shaders, "MVP");
+	shader = LoadShadersFromFile(Settings::i()->getAssetDir() + "shaders/tbVert.glsl",
+	                             Settings::i()->getAssetDir() + "shaders/tbFrag.glsl");
+	mvp_handle = glGetUniformLocation(shader->id(), "MVP");
 	glGenBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex)*VERTEX_BATCH_SIZE, NULL, GL_DYNAMIC_DRAW);
+	doGLError("TBRenderer::initGL");
 }
 
 void TBRenderer::BeginPaint(int render_target_w, int render_target_h)
@@ -100,6 +105,7 @@ void TBRenderer::BeginPaint(int render_target_w, int render_target_h)
 	m_render_target_w = render_target_w;
 	m_render_target_h = render_target_h;
 	Setup(render_target_w, render_target_h);
+	doGLError("TBRenderer::BeginPaint");
 }
 
 void TBRenderer::EndPaint()
@@ -108,6 +114,7 @@ void TBRenderer::EndPaint()
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(2);
+	doGLError("TBRenderer::EndPaint");
 }
 
 tb::TBBitmap *TBRenderer::CreateBitmap(int width, int height, tb::uint32 *data)
@@ -126,11 +133,13 @@ void TBRenderer::RenderBatch(Batch *batch)
 	BindBitmap(batch->bitmap);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex)*batch->vertex_count, &batch->vertex[0], GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_TRIANGLES, 0, batch->vertex_count);
+	doGLError("TBRenderer::RenderBatch");
 }
 
 void TBRenderer::SetClipRect(const tb::TBRect &rect)
 {
 	glScissor(m_clip_rect.x, m_screen_rect.h - (m_clip_rect.y + m_clip_rect.h), m_clip_rect.w, m_clip_rect.h);
+	doGLError("TBRenderer::SetClipRect");
 }
 
 void TBRenderer::OnContextLost() {
@@ -145,6 +154,7 @@ void TBRenderer::BeginNativeRender() {
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(2);
+	doGLError("TBRenderer::BeginNativeRender");
 }
 
 void TBRenderer::EndNativeRender() {
@@ -181,7 +191,7 @@ void TBRenderer::Setup(int render_target_w, int render_target_h)
 	);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(
-	      1,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+	      1,                  // attribute 1. No particular reason for 0, but must match the layout in the shader.
 	      2,                  // size
 	      GL_FLOAT,           // type
 	      GL_FALSE,           // normalized?
@@ -190,15 +200,16 @@ void TBRenderer::Setup(int render_target_w, int render_target_h)
 	);
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(
-	      2,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+	      2,                  // attribute 2. No particular reason for 0, but must match the layout in the shader.
 	      4,                  // size
 	      GL_UNSIGNED_BYTE,   // type
 	      GL_TRUE,            // normalized?
 	      sizeof(Vertex),     // stride
 	      (void*)16           // array buffer offset
 	);
-	glUseProgram(shaders);
+	glUseProgram(shader->id());
 	glUniformMatrix4fv(mvp_handle, 1, GL_FALSE, &mvp[0][0]);
+	doGLError("TBRenderer::Setup");
 }
 
 } }

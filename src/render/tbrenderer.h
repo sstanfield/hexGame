@@ -6,6 +6,7 @@
 #pragma once
 
 #include "tb_types.h"
+#include "shaders.h"
 
 #include "renderers/tb_renderer_batcher.h"
 
@@ -55,7 +56,7 @@ public:
 private:
 	unsigned int mvp_handle;
 	unsigned int vertexbuffer;
-	unsigned int shaders;
+	Shader::s_ptr shader;
 	int m_render_target_w;
 	int m_render_target_h;
 	void Setup(int render_target_w, int render_target_h);

@@ -12,8 +12,8 @@ void Settings::setAssetDir(std::string assetDir) {
 	this->assetDir = assetDir;
 }
 
-const std::string *Settings::getAssetDir() const {
-	return &assetDir;
+const std::string &Settings::getAssetDir() const {
+	return assetDir;
 }
 
 Settings::Settings() {

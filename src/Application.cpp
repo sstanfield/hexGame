@@ -7,6 +7,7 @@
 #include "tb_select_item.h"
 #include "render/tbrenderer.h"
 #include "settings.h"
+#include "hexlua.h"
 
 #include <iostream>
 
@@ -20,18 +21,21 @@ namespace hexgame {
 
 static Application *g_gui_instance = nullptr;
 
-Application *Application::newInstance(int width, int height) {
-	g_gui_instance = new Application();
-	g_gui_instance->renderer = new render::TBRenderer();
-	g_gui_instance->renderer->SetOpacity(1);
-	tb::tb_core_init(g_gui_instance->renderer);
+Application::Application(std::unique_ptr<ServicesInterface> services, int width, int height) :
+		services(std::move(services))
+{
+	g_gui_instance = this;
+	renderer = std::make_unique<render::TBRenderer>();
+	renderer->SetOpacity(1);
+	tb::tb_core_init(renderer.get());
 	// Load language file
-	tb::g_tb_lng->Load((*Settings::i()->getAssetDir()+"/lang/lng_en.tb.txt").c_str());
-	if (tb::g_tb_skin->Load((*Settings::i()->getAssetDir()+"/skin/skin.tb.txt").c_str(),
-			(*Settings::i()->getAssetDir()+"/skin/skin.murs.txt").c_str())) {
+	tb::g_tb_lng->Load((Settings::i()->getAssetDir()+"/lang/lng_en.tb.txt").c_str());
+	if (tb::g_tb_skin->Load((Settings::i()->getAssetDir()+"/skin/skin.tb.txt").c_str(),
+			(Settings::i()->getAssetDir()+"/skin/skin.hex.txt").c_str())) {
 		std::cout << "Loaded skin" << std::endl;
 	} else {
 		std::cout << "Failed to load skin!" << std::endl;
+		throw std::runtime_error("Failed to load skin!");
 	}
 #ifdef TB_FONT_RENDERER_TBBF
 //	void register_tbbf_font_renderer();
@@ -45,9 +49,9 @@ Application *Application::newInstance(int width, int height) {
 	//#if defined(TB_FONT_RENDERER_STB) || defined(TB_FONT_RENDERER_FREETYPE)
 	//	g_font_manager->AddFontInfo("resources/vera.ttf", "Vera");
 	//#endif
-	tb::g_font_manager->AddFontInfo((*Settings::i()->getAssetDir()+"fonts/DroidSans.ttf").c_str(), "Sans");
+	tb::g_font_manager->AddFontInfo((Settings::i()->getAssetDir()+"fonts/DroidSans.ttf").c_str(), "Sans");
 #ifdef TB_FONT_RENDERER_TBBF
-	tb::g_font_manager->AddFontInfo((*Settings::i()->getAssetDir()+"fonts/segoe_white_with_shadow.tb.txt").c_str(), "Segoe");
+	tb::g_font_manager->AddFontInfo((Settings::i()->getAssetDir()+"fonts/segoe_white_with_shadow.tb.txt").c_str(), "Segoe");
 #endif
 
 	// Set the default font description for widgets to one of the fonts we just added
@@ -68,19 +72,20 @@ Application *Application::newInstance(int width, int height) {
 	// without this since glyphs are rendered when needed, but with some extra updating of the glyph bitmap.
 	if (font)
 		font->RenderGlyphs(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~•·åäöÅÄÖΣυρακούσα");
-	g_gui_instance->root = new gui::RootWidget();
-	g_gui_instance->root->SetRect(tb::TBRect(0, 0, width, height));
-	g_gui_instance->root->SetIsFocusable(true);
-	g_gui_instance->root->SetFocus(tb::WIDGET_FOCUS_REASON_UNKNOWN);
-	return g_gui_instance;
+	root = std::make_unique<gui::RootWidget>();
+	root->SetRect(tb::TBRect(0, 0, width, height));
+	root->SetIsFocusable(true);
+	root->SetFocus(tb::WIDGET_FOCUS_REASON_UNKNOWN);
+
+	printf("XXX call lua\n");
+	std::string layout = Settings::i()->getAssetDir()+"layouts/main.lua";
+	lua::HexLua lua;
+	lua.runScript(layout);
 }
 
 Application::~Application() {
-	if (root) delete root;
+	root = nullptr;  // Force delete before tb shutdown.
 	tb::tb_core_shutdown();
-	if (renderer) delete renderer;
-	renderer = nullptr;
-	mainWidget = nullptr;
 	g_gui_instance = nullptr;
 }
 
@@ -207,13 +212,6 @@ bool Application::InvokeKey(unsigned int key, tb::SPECIAL_KEY special_key,
 		ev.special_key = special_key;
 		ev.modifierkeys = modifierkeys;
 		ret = root->InvokeEvent(ev);
-	} else if (!ret && mainWidget && !root->isDimmed()) {
-		// If the default handling failed let the main widget have a crack...
-		tb::TBWidgetEvent ev(down ? tb::EVENT_TYPE_KEY_DOWN : tb::EVENT_TYPE_KEY_UP);
-		ev.key = key;
-		ev.special_key = special_key;
-		ev.modifierkeys = modifierkeys;
-		ret = mainWidget->InvokeEvent(ev);
 	}
 	return ret;
 }

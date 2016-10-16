@@ -4,11 +4,22 @@
 #include "gui/root_widget.h"
 
 #include <functional>
+#include <memory>
 
 namespace hexgame {
 
+class ServicesInterface {
+public:
+	virtual bool isFullscreen() = 0;
+	virtual void toggleFullscreen() = 0;
+	virtual int  numScreens() = 0;
+	virtual void nextFullscreen() = 0;
+	virtual void quit() = 0;
+};
+
 class Application {
 public:
+	Application(std::unique_ptr<ServicesInterface> services, int width, int height);
 	virtual ~Application();
 
 	void lostContext();
@@ -28,52 +39,27 @@ public:
 
 	bool procGamePad();
 
-	void setIsFullscreen(std::function<bool ()> callback) {
-		m_isFullscreen = callback;
-	}
-	void setToggleFullscreen(std::function<void ()> callback) {
-		m_toggleFullscreen = callback;
-	}
-	void setNumScreens(std::function<int ()> callback) {
-		m_numScreens = callback;
-	}
-	void setNextFullscreen(std::function<void ()> callback) {
-		m_nextFullscreen = callback;
-	}
-	void setQuit(std::function<void ()> callback) {
-		m_quit = callback;
-	}
+	bool isFullscreen() { return services->isFullscreen(); }
+	void toggleFullscreen() { services->toggleFullscreen(); }
+	int  numScreens() { return services->numScreens(); }
+	void nextFullscreen() { services->nextFullscreen(); }
+	void quit() { services->quit(); }
 
-	bool isFullscreen() { return m_isFullscreen?m_isFullscreen():false; }
-	void toggleFullscreen() { if (m_toggleFullscreen) m_toggleFullscreen(); }
-	int  numScreens() { return m_numScreens?m_numScreens():1; }
-	void nextFullscreen() { if (m_nextFullscreen) m_nextFullscreen(); }
-	void quit() { if (m_quit) m_quit(); }
-
-	tb::TBWidget *getRootWidget() { return root; }
+	tb::TBWidget *getRootWidget() { return root.get(); }
 
 	static Application *instance();
-	static Application *newInstance(int width, int height);
 
 private:
-	Application() { };
-
-	gui::RootWidget *root;
-	tb::TBWidget *mainWidget = nullptr;
+	std::unique_ptr<gui::RootWidget> root;
+	std::unique_ptr<tb::TBRenderer> renderer;
+	std::unique_ptr<ServicesInterface> services;
 	tb::TBRect mainRect;
-	tb::TBRenderer *renderer = nullptr;
 	double mouseX = 0;
 	double mouseY = 0;
 	double scaleWidth = 1;
 	double scaleHeight = 1;
 	bool glClose = false;
 	bool simEnter = false;
-
-	std::function<bool ()> m_isFullscreen = nullptr;
-	std::function<void ()> m_toggleFullscreen = nullptr;
-	std::function<int  ()> m_numScreens = nullptr;
-	std::function<void ()> m_nextFullscreen = nullptr;
-	std::function<void ()> m_quit = nullptr;
 
 	int  toupr_ascii(int ascii);
 	bool InvokeShortcut(int key, tb::SPECIAL_KEY special_key,

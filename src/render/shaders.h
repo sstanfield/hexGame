@@ -20,20 +20,32 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source
    distribution.
 */
-#ifndef SHADERS_H
-#define SHADERS_H
+#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string>
+#include <memory>
 
+namespace hexgame { namespace render {
 
-unsigned int LoadShaders(const char *vertex_shader,const char *fragment_shader);
-unsigned int LoadShadersFromFile(const char *vertex_file_path,
-								 const char *fragment_file_path);
+class Shader {
+public:
+	Shader(const std::string vertex_file_path,
+           const std::string fragment_file_path);
+	~Shader();
 
-#ifdef __cplusplus
-}
-#endif
+	unsigned int id();
+	operator unsigned int() { return id(); }
 
-#endif // SHADERS_H
+	using s_ptr = std::shared_ptr<Shader>;
+	using w_ptr = std::weak_ptr<Shader>;
+
+private:
+	unsigned int programID = 0;
+	std::string name;
+};
+
+Shader::s_ptr LoadShadersFromFile(const std::string vertex_file_path,
+                                  const std::string fragment_file_path);
+void clearShaderCache();
+
+} }

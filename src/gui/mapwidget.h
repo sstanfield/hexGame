@@ -3,6 +3,8 @@
 #include "glwidget.h"
 #include "render/maprender.h"
 
+#include <memory>
+
 namespace hexgame {
 namespace gui {
 
@@ -14,17 +16,19 @@ public:
 	TBOBJECT_SUBCLASS(MapWidget, GLWidget);
 
 	MapWidget();
-	virtual ~MapWidget();
+	~MapWidget() override;
 
-	virtual void OnResized(int old_w, int old_h);
+	bool OnEvent(const tb::TBWidgetEvent &ev) override;
+	void OnResized(int old_w, int old_h) override;
+	void OnInflate(const tb::INFLATE_INFO &info) override;
 
 protected:
-	virtual void initGL();
-	virtual void render();
+	void initGL() override;
+	void render() override;
 
 private:
 	Map *map;
-	MapRenderer maprenderer;
+	std::unique_ptr<render::MapRenderer> maprenderer;
 };
 
 }

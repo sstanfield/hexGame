@@ -6,10 +6,9 @@
 namespace hexgame {
 namespace gui {
 
-RootWidget::RootWidget() {
-}
-
-RootWidget::~RootWidget() {
+RootWidget::RootWidget()
+{
+	SetID(tb::TBID("RootWindow"));
 }
 
 bool RootWidget::OnEvent(const tb::TBWidgetEvent &ev) {

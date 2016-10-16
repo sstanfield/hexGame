@@ -10,12 +10,12 @@ public:
 	TBOBJECT_SUBCLASS(RootWidget, tb::TBWidget);
 
 	RootWidget();
-	virtual ~RootWidget();
+	~RootWidget() override = default;
 
-	virtual bool OnEvent(const tb::TBWidgetEvent &ev);
+	bool OnEvent(const tb::TBWidgetEvent &ev) override;
 
-	virtual void OnChildAdded(TBWidget *child);
-	virtual void OnChildRemove(TBWidget *child);
+	void OnChildAdded(TBWidget *child) override;
+	void OnChildRemove(TBWidget *child) override;
 
 	bool isDimmed() { return dimmerCnt>0; }
 

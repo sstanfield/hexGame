@@ -20,36 +20,44 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source
    distribution.
 */
-#ifndef MAPRENDER_H
-#define MAPRENDER_H
+#pragma once
 
-#include "../state/map.h"
+#include "state/map.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <memory>
+#include <string>
 
-typedef void *MapRenderer;
+namespace hexgame { namespace render {
 
-MapRenderer initMapRender(Map *map, int width, int height, const char *assetDir);
-void resizeMap(MapRenderer mapctx, int width, int height);
-void renderMap(MapRenderer mapctx, Bool mini);
-void miniMapDirty(MapRenderer mapctx);
-void getMapDisplayCenter(MapRenderer mapctx, int *centerRow, int *centerCol,
-                         int *rowsDisplayed, int *colsDisplayed);
-void setMapDisplayCenter(MapRenderer mapctx, int displayCenterRow,
-                         int displayCenterCol);
-void zoomInMap(MapRenderer mapctx);
-void zoomOutMap(MapRenderer mapctx);
-void freeMapRenderer(MapRenderer mapctx);
+class MapRenderer {
+public:
+	MapRenderer(Map *map, int width, int height, std::string assetDir);
+	~MapRenderer();
 
-void getMapPostion(MapRenderer ctx, int *x, int *y, int *width, int *height);
-void getMiniMapPostion(MapRenderer ctx, int *x, int *y, int *width, int *height);
-Bool setCenterMiniMap(MapRenderer ctx, float x, float y, int *hexcol, int *hexrow);
-Bool setCenterMap(MapRenderer ctx, float x, float y, int *hexcol, int *hexrow);
+	void resizeMap(int width, int height);
+	void renderMap(bool mini);
+	void miniMapDirty();
+	void getMapDisplayCenter(unsigned int& centerRow, unsigned int& centerCol,
+	                         unsigned int& rowsDisplayed, unsigned int& colsDisplayed);
+	void setMapDisplayCenter(int displayCenterRow, int displayCenterCol);
+	void zoomInMap();
+	void zoomOutMap();
 
-#ifdef __cplusplus
-}
-#endif
+	void getMapPostion(int *x, int *y, int *width, int *height);
+	void getMiniMapPostion(int *x, int *y, int *width, int *height);
+	bool setCenterMiniMap(float x, float y, int *hexcol, int *hexrow);
+	bool setCenterMap(float x, float y, int *hexcol, int *hexrow);
 
-#endif // MAPRENDER_H
+	void updateMapDimensions(int width, int height);
+
+	void selectHex(unsigned int col, unsigned int row);
+	void moveUp();
+	void moveDown();
+
+private:
+	struct CTX;
+	std::unique_ptr<CTX> _ctx;
+};
+
+} }
+

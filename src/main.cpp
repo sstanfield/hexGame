@@ -39,15 +39,40 @@ freely, subject to the following restrictions:
 #include <chrono>
 
 static bool running = true;
-static Map *map;
-static MapRenderer maprenderer;
-//static Unit *u1;
 
 static uint turn = 1;
 
 static char *assetDir;
 
 using namespace hexgame;
+
+Application *app = nullptr;
+
+class Services : public ServicesInterface {
+public:
+	bool isFullscreen() override
+	{
+		return false;
+	}
+
+	void toggleFullscreen() override
+	{
+	}
+
+	int  numScreens() override
+	{
+		return 1;
+	}
+
+	void nextFullscreen() override
+	{
+	}
+
+	void quit() override
+	{
+		running = false;
+	}
+};
 
 static void getScaleFactors(GLFWwindow *window, double *scaleWidth, double *scaleHeight) {
 	int fwidth = 1, fheight = 1, swidth = 1, sheight = 1;
@@ -68,16 +93,14 @@ static void init(GLFWwindow *window) {
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	printf("XXX w: %d h: %d\n", width, height);
-	maprenderer = initMapRender(map, width, height, assetDir);
-	resizeMap(maprenderer, width, height);
 }
 
 static void render(GLFWwindow *window) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 //	selectUnit(map, u1);
-	renderMap(maprenderer, FALSE);  // Main map.
-	renderMap(maprenderer, TRUE);   // Mini map.
+	//renderMap(maprenderer, FALSE);  // Main map.
+	//renderMap(maprenderer, TRUE);   // Mini map.
 
 	/*if (map->selectedUnit) {
 		float red[] = {1, 0, 0, 1};
@@ -99,7 +122,9 @@ static void idle(GLFWwindow *window) {
 	double curtime = glfwGetTime();
 	if (lastFpsTime == -1) lastFpsTime = curtime;
 	double renderStart = glfwGetTime();
-	render(window);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	app->processFrame();
+	//render(window);
 	double renderEnd = glfwGetTime();
 	float renderTime = (float)( renderEnd - renderStart);
 
@@ -119,49 +144,7 @@ static void idle(GLFWwindow *window) {
 }
 
 static void shutdown() {
-	freeMapRenderer(maprenderer);
-	maprenderer = nullptr;
 	printf("Shutting down\n");
-}
-
-static void selectHex(int col, int row) {
-	if (map->selectedUnit) {
-		if (map->selectedUnit->row == row && map->selectedUnit->col == col) {
-			// Select again so deselect.
-			deSelectUnit(map);
-		} else {  // Move here if it can.
-			if (map->tiles[row][col].currentMoveCost <= map->selectedUnit->movement) {
-				map->selectedUnit->movement -= map->tiles[row][col].currentMoveCost;
-				moveUnit(map, map->selectedUnit, row, col);
-//				selectUnit(map, map->selectedUnit);
-				deSelectUnit(map);
-			}
-		}
-	} else {  // If there is a unit to select then select it.
-		if (map->tiles[row][col].numUnits) {
-			selectUnit(map, map->tiles[row][col].units[0]);
-		}
-	}
-}
-
-static void moveUp() {
-	int centerRow, centerCol, rowsDisplayed, colsDisplayed;
-	if (map->row > 0) map->row--;
-	getMapDisplayCenter(maprenderer, &centerRow, &centerCol,
-	                         &rowsDisplayed, &colsDisplayed);
-	if (map->row < (centerRow - (rowsDisplayed / 2))) {
-		setMapDisplayCenter(maprenderer, map->row, centerCol);
-	}
-}
-
-static void moveDown() {
-	int centerRow, centerCol, rowsDisplayed, colsDisplayed;
-	if (map->row < (map->numRows-1)) map->row++;
-	getMapDisplayCenter(maprenderer, &centerRow, &centerCol,
-	                         &rowsDisplayed, &colsDisplayed);
-	if (map->row > (centerRow + (rowsDisplayed / 2))) {
-		setMapDisplayCenter(maprenderer, map->row, centerCol);
-	}
 }
 
 static bool key_alt = false;
@@ -191,7 +174,7 @@ static tb::MODIFIER_KEYS GetModifierKeys(int glfwmod) {
 
 static bool InvokeKey(unsigned int key, tb::SPECIAL_KEY special_key,
                    tb::MODIFIER_KEYS modifierkeys, bool down) {
-	return Application::instance()->InvokeKey(key, special_key, modifierkeys, down);
+	return app->InvokeKey(key, special_key, modifierkeys, down);
 }
 
 static bool doKey(int key, unsigned long metaKeys, bool down) {
@@ -233,7 +216,7 @@ static bool doKey(int key, unsigned long metaKeys, bool down) {
 				tb::TBWidgetEvent ev(tb::EVENT_TYPE_CONTEXT_MENU);
 				ev.modifierkeys = modifier;
 				if (tb::TBWidget::focused_widget) tb::TBWidget::focused_widget->InvokeEvent(ev);
-				else Application::instance()->getRootWidget()->InvokeEvent(ev);
+				else app->getRootWidget()->InvokeEvent(ev);
 			}
 			break;
 		case GLFW_KEY_LEFT_SHIFT:
@@ -316,41 +299,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				}
 				break;
 
-			case GLFW_KEY_ENTER:
-				selectHex(map->col, map->row);
-				break;
 
-			case GLFW_KEY_1:
-				zoomOutMap(maprenderer);
-				setMapDisplayCenter(maprenderer, map->row, map->col);
-				break;
-			case GLFW_KEY_2:
-				zoomInMap(maprenderer);
-				setMapDisplayCenter(maprenderer, map->row, map->col);
-				break;
-
-			case GLFW_KEY_UP:
-				moveUp();
-				break;
-			case GLFW_KEY_DOWN:
-				moveDown();
-				break;
-			case GLFW_KEY_RIGHT:
-				if (map->col < (map->numCols-1)) map->col++;
-				getMapDisplayCenter(maprenderer, &centerRow, &centerCol,
-						&rowsDisplayed, &colsDisplayed);
-				if (map->col > (centerCol + (colsDisplayed / 2))) {
-					setMapDisplayCenter(maprenderer, centerRow, map->col);
-				}
-				break;
-			case GLFW_KEY_LEFT:
-				if (map->col > 0) map->col--;
-				getMapDisplayCenter(maprenderer, &centerRow, &centerCol,
-						&rowsDisplayed, &colsDisplayed);
-				if (map->col < (centerCol - (colsDisplayed / 2))) {
-					setMapDisplayCenter(maprenderer, centerRow, map->col);
-				}
-				break;
 		}*/
 	}
 	if (action == GLFW_RELEASE) {
@@ -358,56 +307,41 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	}
 }
 
-static bool b1Down = false;
+//static bool b1Down = false;
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
 	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
 		if (button == GLFW_MOUSE_BUTTON_LEFT) {
-			b1Down = true;
+			app->buttonPress(button, GetModifierKeys(mods));
+			/*b1Down = true;
 			double winX, winY;
 			glfwGetCursorPos(window, &winX, &winY);
 			// XXX TODO are winX/Y correct?
 			int mx, my, mw, mh;
-			getMiniMapPostion(maprenderer, &mx, &my, &mw, &mh);
+			//getMiniMapPostion(maprenderer, &mx, &my, &mw, &mh);
 			if (winX >= mx && winX < (mx + mw) && winY >= my && winY < (my + mh)) {
 				// Clicked in mini map.
 				int hw = mw / 2;
 				int hh = mh / 2;
 				float relX = (float)((winX-mx)-hw)/(float)hw;
 				float relY = -(float)((winY-my)-hh)/(float)hh;
-				setCenterMiniMap(maprenderer, relX, relY, NULL, NULL);
-			}
-			getMapPostion(maprenderer, &mx, &my, &mw, &mh);
-			if (winX >= mx && winX < (mx + mw) && winY >= my && winY < (my + mh)) {
-				// Clicked in map.
-				int hw = mw / 2;
-				int hh = mh / 2;
-				float relX = (float)((winX-mx)-hw)/(float)hw;
-				float relY = -(float)((winY-my)-hh)/(float)hh;
-				int hexcol, hexrow;
-				if (setCenterMap(maprenderer, relX, relY, &hexcol, &hexrow)) {
-					selectHex(hexcol, hexrow);
-				}
-			}
-		}
-		/*	if (button == LoW_ScrollDownMouse) {
-			moveDown();
-			}
-			if (button == LoW_ScrollUpMouse) {
-			moveUp();
+				//setCenterMiniMap(maprenderer, relX, relY, NULL, NULL);
 			}*/
+		}
 	}
 	if (action == GLFW_RELEASE) {
 		if (button == GLFW_MOUSE_BUTTON_LEFT) {
-			b1Down = false;
+			app->buttonRelease(button, GetModifierKeys(mods));
+			//b1Down = false;
 		}
 	}
 }
 
 static void cursor_position_callback(GLFWwindow *window, double x, double y)
 {
-	int mx, my, mw, mh;
-	getMiniMapPostion(maprenderer, &mx, &my, &mw, &mh);
+	app->cursorPosition(x, y, GetModifierKeys());
+	/*int mx, my, mw, mh;
+	//getMiniMapPostion(maprenderer, &mx, &my, &mw, &mh);
 	if (x >= mx && x < (mx + mw) && y >= my && y < (my + mh)) {
 		// In mini map.
 		if (b1Down) {
@@ -415,34 +349,21 @@ static void cursor_position_callback(GLFWwindow *window, double x, double y)
 			int hh = mh / 2;
 			float relX = (float)((x-mx)-hw)/(float)hw;
 			float relY = -(float)((y-my)-hh)/(float)hh;
-			setCenterMiniMap(maprenderer, relX, relY, NULL, NULL);
+			//setCenterMiniMap(maprenderer, relX, relY, NULL, NULL);
 		}
-	}
-	getMapPostion(maprenderer, &mx, &my, &mw, &mh);
-	if (x >= mx && x < (mx + mw) && y >= my && y < (my + mh)) {
-		// Clicked in map.
-		int hw = mw / 2;
-		int hh = mh / 2;
-		float relX = (float)((x-mx)-hw)/(float)hw;
-		float relY = -(float)((y-my)-hh)/(float)hh;
-		int hexcol, hexrow;
-		if (setCenterMap(maprenderer, relX, relY, &hexcol, &hexrow)) {
-//			selectHex(hexcol, hexrow);
-		}
-	}
+	}*/
 }
 
 static void scroll_callback(GLFWwindow *window, double x, double y)
 {
-	//ctx->callbacks->scroll(ctx->glw, x, y);
+	app->scroll(x, y, GetModifierKeys());
 }
 
 static void refresh_callback(GLFWwindow* window) {
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
-	resizeMap(maprenderer, width, height);
+	//resizeMap(maprenderer, width, height);
 	double sw, sx;
-	Application *app = Application::instance();
 	app->setWindowSize(width, height);
 	getScaleFactors(window, &sw, &sx);
 	app->setScaleFactors(sw, sx);
@@ -548,21 +469,6 @@ static GLFWwindow *openWindow(int width, int height,
 		//std::cout << "GL Error init 1- "<<std::hex<<err2<<"\n";
 	}
 	printf("Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
-	int w, h;
-	glfwGetFramebufferSize(window, &w, &h);
-	Application *app = Application::newInstance(w, h);
-	if (!app) {
-		printf("ERROR creating app.\n");
-		glfwTerminate();
-		return nullptr;
-	}
-	double sw, sx;
-	getScaleFactors(window, &sw, &sx);
-	app->setScaleFactors(sw, sx);
-	app->setQuit([] () {
-		printf("XXX quit\n");
-		running = false;
-	});
 	//_dpi = getCurrentDPI();
 	return window;
 }
@@ -592,26 +498,26 @@ void parseCommandLine(int argc, char *argv[]) {
 		assetDir[i+11] = 0;
 	}
 	Settings::i()->setAssetDir(assetDir);
+	free(assetDir);
 }
 
 int main(int argc, char *argv[]) {
 	parseCommandLine(argc, argv);
-//	map = readMap("../test.map");//allocMap(100, 100);
-	map = allocMap(100, 100, Grass);
-//	map = readMap("./new.map");
-	int u1move = aquireMoveCost(map->unitCtx, 2, 4, 5, 3, 4, 0, 0, 0, 1, 2, 1);
-	Unit *u1 = newUnit(map->unitCtx, Side_Black, "Test Cav", 3, 5, 20, u1move);
-	placeUnit(map, u1, 50, 50);
-//	printf("XXXX 1\n");
-//	selectUnit(map, u1);
-//	printf("XXXX 2\n");
 	signal(SIGINT, handler);
 	signal(SIGTERM, handler);
 	GLFWwindow *window = nullptr;
 	if ((window = openWindow(1024, 768, false, "HEX Game!"))) {
+		int w, h;
+		glfwGetFramebufferSize(window, &w, &h);
+		Application a(std::make_unique<Services>(), w, h);
+		app = &a;
+		double sw, sx;
+		getScaleFactors(window, &sw, &sx);
+		app->setScaleFactors(sw, sx);
+
 		loop(window);
+
+		app = nullptr;
 	}
-	freeMap(map);
-	free(assetDir);
 	return 0;
 }
