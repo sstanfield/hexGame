@@ -1,3 +1,4 @@
+#include "Application.h"
 #include "mapwidget.h"
 #include "settings.h"
 #include "tb_widgets_reader.h"
@@ -6,11 +7,7 @@ namespace hexgame {
 namespace gui {
 
 MapWidget::MapWidget() {
-	map = allocMap(100, 100, Grass);
-	int u1move = aquireMoveCost(map->unitCtx, 2, 4, 5, 3, 4, 0, 0, 0, 1, 2, 1);
-	Unit *u1 = newUnit(map->unitCtx, Side_Black, "Test Cav", 3, 5, 20, u1move);
-	placeUnit(map, u1, 50, 50);
-
+	map = Application::instance()->getMap();
 	tb::TBRect r = GetRect();
 	maprenderer = std::make_unique<render::MapRenderer>(map, r.w, r.h, Settings::i()->getAssetDir());
 }
@@ -125,7 +122,6 @@ void MapWidget::render() {
 }
 
 void MapWidget::OnInflate(const tb::INFLATE_INFO &info) {
-	printf("xxx OnInflate\n");
 	GLWidget::OnInflate(info);
 }
 

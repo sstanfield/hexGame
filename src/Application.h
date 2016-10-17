@@ -2,6 +2,7 @@
 
 #include "tb_widgets.h"
 #include "gui/root_widget.h"
+#include "state/map.h"
 
 #include <functional>
 #include <memory>
@@ -44,6 +45,7 @@ public:
 	int  numScreens() { return services->numScreens(); }
 	void nextFullscreen() { services->nextFullscreen(); }
 	void quit() { services->quit(); }
+	std::shared_ptr<Map> getMap() { return map; }
 
 	tb::TBWidget *getRootWidget() { return root.get(); }
 
@@ -53,6 +55,7 @@ private:
 	std::unique_ptr<gui::RootWidget> root;
 	std::unique_ptr<tb::TBRenderer> renderer;
 	std::unique_ptr<ServicesInterface> services;
+	std::shared_ptr<Map> map;
 	tb::TBRect mainRect;
 	double mouseX = 0;
 	double mouseY = 0;

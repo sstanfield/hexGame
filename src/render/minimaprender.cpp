@@ -20,10 +20,9 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source
    distribution.
 */
-#include "maprender.h"
+#include "minimaprender.h"
 #include "shaders.h"
 #include "pc/GL/glew.h"
-#include "imageutils.h"
 #include "gl_util.h"
 
 #include <stdlib.h>
@@ -33,8 +32,6 @@ freely, subject to the following restrictions:
 #define HEX_HEIGHT_ADJUST .86330935
 
 namespace hexgame { namespace render {
-
-static constexpr float zoomLevels[] = { .2f, .1f, .075f, .05f, .03f };
 
 static GLuint genBuffer(const GLfloat *buffer, int size) {
 	GLuint bufferID;
@@ -70,50 +67,30 @@ static void getTileColor(TileType type, float *color) {
 	}
 }
 
-struct MapRenderer::CTX {
+struct MiniMapRenderer::CTX {
 	std::shared_ptr<Map> map;
 
 	int width;
 	int height;
-	int mapStartX;
-	int mapStartY;
-	int mapwidth;
-	int mapheight;
-	int miniStartX;
-	int miniStartY;
-	int miniwidth;
-	int miniheight;
-	int zoomLevel;
 	int centerRow;
 	int centerCol;
 
 	float mapScale;
 	float maphfactor;
 	float mapwfactor;
-	float minihfactor;
-	float miniwfactor;
 
-	Bool   miniMapDirty;
+	bool   miniMapDirty;
 	byte  *miniMap;
 	GLuint miniMapTexture;
 
 	GLuint vertexArrayID;
 
 	// Shaders
-	Shader::s_ptr hexprog;
 	Shader::s_ptr hexminiprog;
 	Shader::s_ptr minilocprog;
-	Shader::s_ptr hexoverlayprog;
 	Shader::s_ptr texpassprog;
 
 	// Uniforms
-	GLuint heightFactor;
-	GLuint widthFactor;
-	GLuint centerId;
-	GLuint useBorderId;
-	GLuint textureID0;
-	GLuint borderColor;
-	GLuint borderThickness;
 	GLuint mini_heightFactor;
 	GLuint mini_widthFactor;
 	GLuint mini_centerId;
@@ -124,16 +101,12 @@ struct MapRenderer::CTX {
 	GLuint miniloc_centerwFactor;
 	GLuint miniloc_centerId;
 	GLuint miniloc_colorId;
-	GLuint hexOverlayHeightFactor;
-	GLuint hexOverlayWidthFactor;
-	GLuint hexOverlayCenterId;
 	GLuint texpass_textureID0;
 
 	// Models for various hexes (or parts thereof).
 	GLuint squarevertexbuffer;
 	GLuint squareuvbuffer;
 	GLuint hexvertexbuffer;
-	GLuint hexbarrybuffer;
 	GLuint hexuvbuffer;
 	GLuint hexleftvertexbuffer;
 	GLuint hexleftuvbuffer;
@@ -154,85 +127,19 @@ struct MapRenderer::CTX {
 	GLuint hexidxbuffer;
 	GLuint squareidxbuffer;
 
-	// Textures
-	GLuint borderTex;
-	GLuint waterTex;
-	GLuint grassTex;
-	GLuint hillTex;
-	GLuint forestTex;
-	GLuint mountainTex;
-	GLuint swampTex;
-	GLuint cityCenterTex;
-	GLuint city1Tex;
-	GLuint city2Tex;
-	GLuint city3Tex;
-	GLuint city4Tex;
-	GLuint city5Tex;
-	GLuint city6Tex;
-	GLuint unitDefault;
-
-
-	GLuint getTileTexture(TileType type) {
-		GLuint ret;
-		switch (type) {
-			case Grass: ret = grassTex; break;
-			case Forest: ret = forestTex; break;
-			case Swamp: ret = swampTex; break;
-			            //	case Desert: ret = desertTex; break;
-			case Hill: ret = hillTex; break;
-			case Mountain: ret = mountainTex; break;
-			case Water: ret = waterTex; break;
-			            //	case Temple: ret = templeTex; break;
-			            //	case Ruin: ret = ruinTex; break;
-			case CityCenter: ret = cityCenterTex; break;
-			case City1: ret = city1Tex; break;
-			case City2: ret = city2Tex; break;
-			case City3: ret = city3Tex; break;
-			case City4: ret = city4Tex; break;
-			case City5: ret = city5Tex; break;
-			case City6: ret = city6Tex; break;
-		}
-		return ret;
-	}
-
-	void drawHex(const float *center, Bool mini,
-			int row, int col) {
-		Bool isSelected = col==map->col&&row==map->row;
+	void drawHex(const float *center, unsigned int row, unsigned int col) {
+		printf("XXX hex %d, %d\n", row, col);
 		TileType type = map->tiles[row][col].type;
 
-		if (mini) {
-			glUseProgram(hexminiprog->id());
-			glUniform1f(mini_heightFactor, minihfactor);
-			glUniform1f(mini_widthFactor, miniwfactor);
+		glUseProgram(hexminiprog->id());
+		glUniform1f(mini_heightFactor, maphfactor);
+		glUniform1f(mini_widthFactor, mapwfactor);
 
-			glUniform2fv(mini_centerId, 1, center);
+		glUniform2fv(mini_centerId, 1, center);
 
-			float color[4] = {0.0, 0.0, 0.0, 1.0};
-			getTileColor(type, color);
-			glUniform4fv(mini_colorId, 1, color);
-		} else {
-			glUseProgram(hexprog->id());
-			glUniform1f(heightFactor, maphfactor);
-			glUniform1f(widthFactor, mapwfactor);
-
-			glUniform2fv(centerId, 1, center);
-			if (isSelected) {
-				float bcolor[] = {1.0, 0, 0, 1.0};
-				glUniform4fv(borderColor, 1, bcolor);
-				glUniform1f(borderThickness, .85 - ((float)zoomLevel * .01));
-				glUniform1i(useBorderId, 1);
-			} else {
-				float bcolor[] = {0, 0, 0, 1.0};
-				glUniform4fv(borderColor, 1, bcolor);
-				glUniform1f(borderThickness, .95 - ((float)zoomLevel * .01));
-				glUniform1i(useBorderId, 1);
-			}
-
-			GLuint tileTex = getTileTexture(type);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, tileTex);
-			glUniform1i(textureID0, 0);
-		}
+		float color[4] = {0.0, 0.0, 0.0, 1.0};
+		getTileColor(type, color);
+		glUniform4fv(mini_colorId, 1, color);
 
 		GLuint vertexbuffer = hexvertexbuffer;
 		GLuint uvbuffer = hexuvbuffer;
@@ -277,54 +184,10 @@ struct MapRenderer::CTX {
 				0,                  // stride
 				(void*)0            // array buffer offset
 	            );
-		if (!mini) {
-			// 2nd attribute buffer : texture coords
-			glEnableVertexAttribArray(1);
-			glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-			glVertexAttribPointer(1,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
-					2,                  // size
-					GL_FLOAT,           // type
-					GL_FALSE,           // normalized?
-					0,                  // stride
-					(void*)0            // array buffer offset
-		            );
 
-			// 3nd attribute buffer : used for borders
-			glEnableVertexAttribArray(2);
-			glBindBuffer(GL_ARRAY_BUFFER, hexbarrybuffer);
-			glVertexAttribPointer(2,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
-					3,                  // size
-					GL_FLOAT,           // type
-					GL_FALSE,           // normalized?
-					0,                  // stride
-					(void*)0            // array buffer offset
-		            );
-		}
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hexidxbuffer);
 		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, NULL);
 
-		if (!mini) {
-			GLboolean depthTest;
-			glGetBooleanv(GL_DEPTH_TEST, &depthTest);
-			if (depthTest) glDisable(GL_DEPTH_TEST);
-			if (map->tiles[row][col].units) {
-				glBindTexture(GL_TEXTURE_2D, unitDefault);
-				//			printf("XXX Draw unit %d, %d\n", row, col);
-				glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, NULL);
-			}
-			if (map->selectedUnit && map->tiles[row][col].currentMoveCost &&
-					map->tiles[row][col].currentMoveCost <= map->selectedUnit->movement) {
-				//			printf("XXX MARK MOVE %d, %d\n", row, col);
-				glUseProgram(hexoverlayprog->id());
-				glUniform1f(hexOverlayHeightFactor, maphfactor);
-				glUniform1f(hexOverlayWidthFactor, mapwfactor);
-				glUniform2fv(hexOverlayCenterId, 1, center);
-				glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, NULL);
-			}
-			if (depthTest) glEnable(GL_DEPTH_TEST);
-			glDisableVertexAttribArray(1);
-			glDisableVertexAttribArray(2);
-		}
 		glDisableVertexAttribArray(0);
 	}
 
@@ -332,12 +195,12 @@ struct MapRenderer::CTX {
 		if (!miniMapDirty) return;
 		// Save map so we can blit it directly until dirty.
 		if (miniMap) {
-			glReadPixels(miniStartX, miniStartY, miniwidth, miniheight,
+			glReadPixels(0, 0, width, height,
 					GL_RGBA, GL_UNSIGNED_BYTE, miniMap);
 			glBindTexture(GL_TEXTURE_2D, miniMapTexture);
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, miniwidth, miniheight,
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
 					GL_RGBA, GL_UNSIGNED_BYTE, miniMap);
-			miniMapDirty = FALSE;
+			miniMapDirty = false;
 		}
 	}
 
@@ -346,12 +209,12 @@ struct MapRenderer::CTX {
 		int halfX = (map->numCols / 2);
 		int halfY = (map->numRows / 2);
 		glUseProgram(minilocprog->id());
-		float hfac = (1.0f / maphfactor) * minihfactor;// / (float)(map->numRows);
-		float wfac = (1.0f / mapwfactor) * miniwfactor;// / ((float)map->numCols*.75f);
+		float hfac = (1.0f / maphfactor) * maphfactor;// / (float)(map->numRows);
+		float wfac = (1.0f / mapwfactor) * mapwfactor;// / ((float)map->numCols*.75f);
 		glUniform1f(miniloc_heightFactor, hfac);
 		glUniform1f(miniloc_widthFactor, wfac);
-		glUniform1f(miniloc_centerhFactor, minihfactor);
-		glUniform1f(miniloc_centerwFactor, miniwfactor);
+		glUniform1f(miniloc_centerhFactor, maphfactor);
+		glUniform1f(miniloc_centerwFactor, mapwfactor);
 		float c2[] = { 0, 0 };
 		int mcol = -(halfY-centerCol);
 		int mrow = halfX-centerRow;
@@ -377,23 +240,12 @@ struct MapRenderer::CTX {
 
 };
 
-MapRenderer::MapRenderer(std::shared_ptr<Map> map, int width, int height, std::string assetDir) {
+MiniMapRenderer::MiniMapRenderer(std::shared_ptr<Map> map, int width, int height, std::string assetDir) {
 	_ctx = std::make_unique<CTX>();
-	_ctx->zoomLevel = 1;
-	_ctx->mapScale = zoomLevels[_ctx->zoomLevel];
 	_ctx->map = map;
 	_ctx->centerRow = map->row;
 	_ctx->centerCol = map->col;
-	_ctx->miniMapDirty = TRUE;
-	_ctx->hexprog = LoadShadersFromFile(assetDir + "shaders/HexVertex.glsl",
-	                                  assetDir + "shaders/HexFragment.glsl");
-	_ctx->heightFactor = glGetUniformLocation(_ctx->hexprog->id(), "heightFactor");
-	_ctx->widthFactor = glGetUniformLocation(_ctx->hexprog->id(), "widthFactor");
-	_ctx->centerId = glGetUniformLocation(_ctx->hexprog->id(), "center");
-	_ctx->useBorderId = glGetUniformLocation(_ctx->hexprog->id(), "useBorder");
-	_ctx->textureID0 = glGetUniformLocation(_ctx->hexprog->id(), "Texture0");
-	_ctx->borderColor = glGetUniformLocation(_ctx->hexprog->id(), "borderColor");
-	_ctx->borderThickness = glGetUniformLocation(_ctx->hexprog->id(), "borderThickness");
+	_ctx->miniMapDirty = true;
 
 	_ctx->hexminiprog = LoadShadersFromFile(assetDir + "shaders/HexMiniVertex.glsl",
 	                                      assetDir + "shaders/HexMiniFragment.glsl");
@@ -411,11 +263,6 @@ MapRenderer::MapRenderer(std::shared_ptr<Map> map, int width, int height, std::s
 	_ctx->miniloc_centerId = glGetUniformLocation(_ctx->minilocprog->id(), "center");
 	_ctx->miniloc_colorId = glGetUniformLocation(_ctx->minilocprog->id(), "tileColor");
 
-	_ctx->hexoverlayprog = LoadShadersFromFile(assetDir + "shaders/HexOverlayVertex.glsl",
-	                                         assetDir + "shaders/HexOverlayFragment.glsl");
-	_ctx->hexOverlayHeightFactor = glGetUniformLocation(_ctx->hexoverlayprog->id(), "heightFactor");
-	_ctx->hexOverlayWidthFactor = glGetUniformLocation(_ctx->hexoverlayprog->id(), "widthFactor");
-	_ctx->hexOverlayCenterId = glGetUniformLocation(_ctx->hexoverlayprog->id(), "center");
 	_ctx->texpassprog = LoadShadersFromFile(assetDir + "shaders/TexPassVertex.glsl",
 	                                      assetDir + "shaders/TexPassFragment.glsl");
 	_ctx->texpass_textureID0 = glGetUniformLocation(_ctx->texpassprog->id(), "Texture0");
@@ -449,16 +296,6 @@ MapRenderer::MapRenderer(std::shared_ptr<Map> map, int width, int height, std::s
 	   -1.0f,  0.0f,  0.0f,    // left
 	};
 	_ctx->hexvertexbuffer = genBuffer(hex_vertex_buffer_data, sizeof(hex_vertex_buffer_data));
-	static const GLfloat hex_barry_buffer_data[] = {
-	    1.0f,  0.0f,  0.0f,    // center
-	    0.0f,  1.0f,  0.0f,    // left top
-	    0.0f,  1.0f,  0.0f,    // right top
-	    0.0f,  1.0f,  0.0f,    // right
-	    0.0f,  1.0f,  0.0f,    // right bottom
-	    0.0f,  1.0f,  0.0f,    // left bottom
-	    0.0f,  1.0f,  0.0f,    // left
-	};
-	_ctx->hexbarrybuffer = genBuffer(hex_barry_buffer_data, sizeof(hex_barry_buffer_data));
 	static const GLfloat hex_left_vertex_buffer_data[] = {
 	    0.0f,  0.0f,  0.0f,    // center
 	   -0.5f,  1.0f,  0.0f,    // left top
@@ -627,29 +464,13 @@ MapRenderer::MapRenderer(std::shared_ptr<Map> map, int width, int height, std::s
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ctx->squareidxbuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(squareindices), squareindices, GL_STATIC_DRAW);
 
-	_ctx->borderTex = read_png_file((assetDir + "tiles/border_tile.png").c_str());
-	_ctx->waterTex  = read_png_file((assetDir + "tiles/water_tile.png").c_str());
-	_ctx->grassTex  = read_png_file((assetDir + "tiles/grass_tile.png").c_str());
-	_ctx->hillTex  = read_png_file((assetDir + "tiles/hill_tile.png").c_str());
-	_ctx->forestTex  = read_png_file((assetDir + "tiles/forest_tile.png").c_str());
-	_ctx->mountainTex  = read_png_file((assetDir + "tiles/mountain_tile.png").c_str());
-	_ctx->swampTex  = read_png_file((assetDir + "tiles/swamp_tile.png").c_str());
-	_ctx->cityCenterTex  = read_png_file((assetDir + "tiles/citycenter_tile.png").c_str());
-	_ctx->city1Tex  = read_png_file((assetDir + "tiles/city1_tile.png").c_str());
-	_ctx->city2Tex  = read_png_file((assetDir + "tiles/city2_tile.png").c_str());
-	_ctx->city3Tex  = read_png_file((assetDir + "tiles/city3_tile.png").c_str());
-	_ctx->city4Tex  = read_png_file((assetDir + "tiles/city4_tile.png").c_str());
-	_ctx->city5Tex  = read_png_file((assetDir + "tiles/city5_tile.png").c_str());
-	_ctx->city6Tex  = read_png_file((assetDir + "tiles/city6_tile.png").c_str());
-	_ctx->unitDefault  = read_png_file((assetDir + "units/default_unit.png").c_str());
-	doGLError("MapRenderer::MapRenderer");
+	doGLError("MiniMapRenderer::MiniMapRenderer");
 }
 
-MapRenderer::~MapRenderer() {
+MiniMapRenderer::~MiniMapRenderer() {
 	glDeleteBuffers(1, &_ctx->squarevertexbuffer);
 	glDeleteBuffers(1, &_ctx->squareuvbuffer);
 	glDeleteBuffers(1, &_ctx->hexvertexbuffer);
-	glDeleteBuffers(1, &_ctx->hexbarrybuffer);
 	glDeleteBuffers(1, &_ctx->hexuvbuffer);
 	glDeleteBuffers(1, &_ctx->hexleftvertexbuffer);
 	glDeleteBuffers(1, &_ctx->hexleftuvbuffer);
@@ -666,21 +487,6 @@ MapRenderer::~MapRenderer() {
 	glDeleteBuffers(1, &_ctx->hexbottomleftvertexbuffer);
 	glDeleteBuffers(1, &_ctx->hexbottomleftuvbuffer);
 
-	glDeleteTextures(1, &_ctx->borderTex);
-	glDeleteTextures(1, &_ctx->waterTex);
-	glDeleteTextures(1, &_ctx->grassTex);
-	glDeleteTextures(1, &_ctx->hillTex);
-	glDeleteTextures(1, &_ctx->forestTex);
-	glDeleteTextures(1, &_ctx->mountainTex);
-	glDeleteTextures(1, &_ctx->swampTex);
-	glDeleteTextures(1, &_ctx->cityCenterTex);
-	glDeleteTextures(1, &_ctx->city1Tex);
-	glDeleteTextures(1, &_ctx->city2Tex);
-	glDeleteTextures(1, &_ctx->city3Tex);
-	glDeleteTextures(1, &_ctx->city4Tex);
-	glDeleteTextures(1, &_ctx->city5Tex);
-	glDeleteTextures(1, &_ctx->city6Tex);
-
 	glDeleteVertexArrays(1, &_ctx->vertexArrayID);
 
 	if (_ctx->miniMap) {
@@ -689,69 +495,44 @@ MapRenderer::~MapRenderer() {
 	}
 }
 
-void MapRenderer::updateMapDimensions(int width, int height) {
+void MiniMapRenderer::updateMapDimensions(int width, int height) {
 	Map *map = _ctx->map.get();
 	_ctx->width = width;
 	_ctx->height = height;
 
-	// Calculate minimap coordinates.
-	_ctx->miniwidth = width * .28;
-	_ctx->miniheight = height * .5;
-	_ctx->miniStartX = width - _ctx->miniwidth;
-	_ctx->miniwidth -= (width * .01);
-	_ctx->miniStartY = height - _ctx->miniheight;
-	_ctx->miniheight -= (height * .01);
-	// Calculate map coordinates.
-	_ctx->mapwidth = width;// * .7;
-	_ctx->mapheight = height;// * .85;
-	_ctx->mapStartX = 0;//width * .01;
-	_ctx->mapStartY = 0;//height - _ctx->mapheight - (height * .01);
-	if (_ctx->mapStartY < 0) _ctx->mapStartY = 0;
+	_ctx->width = width;
+	_ctx->height = height;
 
-	_ctx->maphfactor = _ctx->mapheight;
-	_ctx->mapwfactor = _ctx->mapwidth;
-	_ctx->minihfactor = _ctx->miniheight;
-	_ctx->miniwfactor = _ctx->miniwidth;
+	_ctx->maphfactor = _ctx->height;
+	_ctx->mapwfactor = _ctx->width;
 
 	// Calculate the mini map scaling factors.
-	if (_ctx->minihfactor < _ctx->miniwfactor) {
-		_ctx->miniwfactor = (_ctx->minihfactor / _ctx->miniwfactor);
-		_ctx->minihfactor = 1;
-	} else {
-		_ctx->minihfactor = (_ctx->miniwfactor / _ctx->minihfactor);
-		_ctx->miniwfactor = 1;
-	}
-	_ctx->minihfactor *= HEX_HEIGHT_ADJUST;
-	float s1 = 1.0f / ((float)map->numRows*_ctx->minihfactor);
-	float s2 = 1.0f / ((float)(map->numCols/2)*1.5f*_ctx->miniwfactor);
-	float miniScale = s1<s2?s1:s2;
-	_ctx->minihfactor *= miniScale;
-	_ctx->miniwfactor *= miniScale;
-
-	// Calculate the main maps scaling factors.
 	if (_ctx->maphfactor < _ctx->mapwfactor) {
-		_ctx->mapwfactor = (_ctx->maphfactor / _ctx->mapwfactor) * _ctx->mapScale;
-		_ctx->maphfactor = _ctx->mapScale;
+		_ctx->mapwfactor = (_ctx->maphfactor / _ctx->mapwfactor);
+		_ctx->maphfactor = 1;
 	} else {
-		_ctx->maphfactor = (_ctx->mapwfactor / _ctx->maphfactor) * _ctx->mapScale;
-		_ctx->mapwfactor = _ctx->mapScale;
+		_ctx->maphfactor = (_ctx->mapwfactor / _ctx->maphfactor);
+		_ctx->mapwfactor = 1;
 	}
 	_ctx->maphfactor *= HEX_HEIGHT_ADJUST;
+	float s1 = 1.0f / ((float)map->numRows*_ctx->maphfactor);
+	float s2 = 1.0f / ((float)(map->numCols/2)*1.5f*_ctx->mapwfactor);
+	float miniScale = s1<s2?s1:s2;
+	_ctx->maphfactor *= miniScale;
+	_ctx->mapwfactor *= miniScale;
 
-	if (_ctx->miniMap) {
-		free(_ctx->miniMap);
-		glDeleteTextures(1, &_ctx->miniMapTexture);
-	}
-	int miniMapMemSize = _ctx->miniheight * _ctx->miniwidth * sizeof(byte) * 4;
+	free(_ctx->miniMap);
+	glDeleteTextures(1, &_ctx->miniMapTexture);
+	int miniMapMemSize = _ctx->height * _ctx->width * sizeof(byte) * 4;
 	_ctx->miniMap = (byte *)malloc(miniMapMemSize);
 	memset(_ctx->miniMap, 255, miniMapMemSize);
-	_ctx->miniMapDirty = TRUE;
+	_ctx->miniMapDirty = true;
 	glGenTextures(1, &_ctx->miniMapTexture);
 
 	// Store the mini map as a texture to avoid generating it needlessly (it is expensive).
 	glBindTexture(GL_TEXTURE_2D, _ctx->miniMapTexture);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _ctx->miniwidth, _ctx->miniheight,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _ctx->width, _ctx->height,
 	             0, GL_RGBA, GL_UNSIGNED_BYTE, _ctx->miniMap);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -762,71 +543,50 @@ void MapRenderer::updateMapDimensions(int width, int height) {
 //	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void MapRenderer::resizeMap(int width, int height) {
+void MiniMapRenderer::resizeMap(int width, int height) {
 	updateMapDimensions(width, height);
 }
 
-void MapRenderer::renderMap(bool mini) {
+void MiniMapRenderer::renderMap() {
 	Map *map = _ctx->map.get();
-	if (mini) {
-		/*glViewport(_ctx->miniStartX,
-		           _ctx->miniStartY,
-		           _ctx->miniwidth,
-		           _ctx->miniheight);*/
-		if (!_ctx->miniMapDirty) {
-			GLboolean depthTest;
-			glGetBooleanv(GL_DEPTH_TEST, &depthTest);
-			if (depthTest) glDisable(GL_DEPTH_TEST);
-			glUseProgram(_ctx->texpassprog->id());
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, _ctx->miniMapTexture);
-			glUniform1i(_ctx->texpass_textureID0, 0);
-			glEnableVertexAttribArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, _ctx->squarevertexbuffer);
-			glVertexAttribPointer(0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			                      3,                  // size
-			                      GL_FLOAT,           // type
-			                      GL_FALSE,           // normalized?
-			                      0,                  // stride
-			                      (void*)0            // array buffer offset
-			                      );
-			glEnableVertexAttribArray(1);
-			glBindBuffer(GL_ARRAY_BUFFER, _ctx->squareuvbuffer);
-			glVertexAttribPointer(1,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
-			                      2,                  // size
-			                      GL_FLOAT,           // type
-			                      GL_FALSE,           // normalized?
-			                      0,                  // stride
-			                      (void*)0            // array buffer offset
-			                      );
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ctx->squareidxbuffer);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
-			glDisableVertexAttribArray(0);
-			glDisableVertexAttribArray(1);
-			if (depthTest) glEnable(GL_DEPTH_TEST);
-			_ctx->miniMapLocMarker();
-			/*glViewport(0,
-			           0,
-			           _ctx->width,
-			           _ctx->height);*/
-			return;
-		}
-	/*} else {
-		glViewport(_ctx->mapStartX,
-		           _ctx->mapStartY,
-		           _ctx->mapwidth,
-		           _ctx->mapheight);*/
+	if (!_ctx->miniMapDirty) {
+		GLboolean depthTest;
+		glGetBooleanv(GL_DEPTH_TEST, &depthTest);
+		if (depthTest) glDisable(GL_DEPTH_TEST);
+		glUseProgram(_ctx->texpassprog->id());
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, _ctx->miniMapTexture);
+		glUniform1i(_ctx->texpass_textureID0, 0);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, _ctx->squarevertexbuffer);
+		glVertexAttribPointer(0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+				3,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			    );
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, _ctx->squareuvbuffer);
+		glVertexAttribPointer(1,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
+				2,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			    );
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ctx->squareidxbuffer);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+		if (depthTest) glEnable(GL_DEPTH_TEST);
+		_ctx->miniMapLocMarker();
+		return;
 	}
 	int numX;
 	int numY;
-	if (mini) {
-		numX = map->numCols;
-		numY = map->numRows;
-	} else {
-		numX = (int)(1.0f / _ctx->mapwfactor) + 1;
-		numX += (numX / 4) + 6;  //  These are interleaved so need some padding.
-		numY = (int)(1.0f / _ctx->maphfactor) + 2;
-	}
+	numX = map->numCols;
+	numY = map->numRows;
 
 	float c[] = { 0.0f, 0.0f };
 	int row, col;
@@ -857,32 +617,25 @@ void MapRenderer::renderMap(bool mini) {
 
 	for (col = -halfX; col <= halfX; col++) {
 		c[0] = 1.5f * col;
-		int mcol = mini?halfY+col:_ctx->centerCol+col;
+		int mcol = halfY+col;
 		for (row = -halfY; row <= halfY; row++) {
 			c[1] = (2.0f * row)+(mcol%2?1.0f:0.0f);
-			int mrow = mini?halfX-row:_ctx->centerRow-row;
+			int mrow = halfX-row;
 			if (mrow >= 0 && mrow < map->numRows && mcol >=0 && mcol < map->numCols) {
-				_ctx->drawHex(c , mini, mrow, mcol);
+				_ctx->drawHex(c , mrow, mcol);
 			}
 		}
 	}
 
-	if (mini) {
-		_ctx->saveMiniMap();
-		_ctx->miniMapLocMarker();
-	}
-
-	/*glViewport(0,
-	           0,
-	           _ctx->width,
-	           _ctx->height);*/
+	//_ctx->saveMiniMap();
+	_ctx->miniMapLocMarker();
 }
 
-void MapRenderer::miniMapDirty() {
-	_ctx->miniMapDirty = TRUE;
+void MiniMapRenderer::miniMapDirty() {
+	_ctx->miniMapDirty = true;
 }
 
-void MapRenderer::getMapDisplayCenter(unsigned int& centerRow, unsigned int& centerCol,
+void MiniMapRenderer::getMapDisplayCenter(unsigned int& centerRow, unsigned int& centerCol,
                          unsigned int& rowsDisplayed, unsigned int& colsDisplayed) {
 	centerRow = _ctx->centerRow;
 	centerCol = _ctx->centerCol;
@@ -890,51 +643,25 @@ void MapRenderer::getMapDisplayCenter(unsigned int& centerRow, unsigned int& cen
 	colsDisplayed = static_cast<unsigned int>((1.0f / _ctx->mapwfactor) * 1.25);
 }
 
-void MapRenderer::setMapDisplayCenter(int displayCenterRow,
+void MiniMapRenderer::setMapDisplayCenter(int displayCenterRow,
                                 int displayCenterCol) {
 	_ctx->centerRow = displayCenterRow;
 	_ctx->centerCol = displayCenterCol;
 }
 
-void MapRenderer::zoomInMap() {
-	if (_ctx->zoomLevel > 0) {
-		_ctx->zoomLevel--;
-		_ctx->mapScale = zoomLevels[_ctx->zoomLevel];
-		updateMapDimensions(_ctx->width, _ctx->height);
-	}
-}
-
-void MapRenderer::zoomOutMap() {
-	int maxLevel = sizeof(zoomLevels) / sizeof(float);
-	if (_ctx->zoomLevel < (maxLevel - 1)) {
-		_ctx->zoomLevel++;
-		_ctx->mapScale = zoomLevels[_ctx->zoomLevel];
-		updateMapDimensions(_ctx->width, _ctx->height);
-	}
-}
-
-
-void MapRenderer::getMapPostion(int *x, int *y,
-                   int *width, int *height) {
-	*x = _ctx->mapStartX;
-	*y = _ctx->height - (_ctx->mapStartY + _ctx->mapheight);
-	*width = _ctx->mapwidth;
-	*height = _ctx->mapheight;
-}
-
-void MapRenderer::getMiniMapPostion(int *x, int *y,
+void MiniMapRenderer::getMiniMapPostion(int *x, int *y,
                        int *width, int *height) {
-	*x = _ctx->miniStartX;
-	*y = _ctx->height - (_ctx->miniStartY + _ctx->miniheight);
-	*width = _ctx->miniwidth;
-	*height = _ctx->miniheight;
+	*x = 0;
+	*y = 0;
+	*width = _ctx->width;
+	*height = _ctx->height;
 }
 
-bool MapRenderer::setCenterMiniMap(float x, float y, int *hexcol, int *hexrow) {
+bool MiniMapRenderer::setCenterMiniMap(float x, float y, int *hexcol, int *hexrow) {
 	Bool ret = FALSE;
-	int col = (x / (1.5f * _ctx->miniwfactor)) + (_ctx->map->numCols / 2);
-	int row = -(y / (2.0f * _ctx->minihfactor) - (col%2?1.0f:0.0f))
-	                 + (_ctx->map->numRows / 2);
+	int col = (x / (1.5f * _ctx->mapwfactor)) + (_ctx->map->numCols / 2);
+	int row = -(y / (2.0f * _ctx->maphfactor) - (col%2?1.0f:0.0f))
+	                   + (_ctx->map->numRows / 2);
 	if (col >=0 && col < _ctx->map->numCols && row >= 0 && row < _ctx->map->numRows) {
 		_ctx->map->col = col;
 		_ctx->map->row = row;
@@ -944,65 +671,6 @@ bool MapRenderer::setCenterMiniMap(float x, float y, int *hexcol, int *hexrow) {
 		ret = TRUE;
 	}
 	return ret;
-}
-
-bool MapRenderer::setCenterMap(float x, float y, int *hexcol, int *hexrow) {
-	Bool ret = FALSE;
-	int col = _ctx->centerCol + (int)(x / (1.5f * _ctx->mapwfactor) +
-	                                  (x<0?-.5f:.5f));
-	int row = _ctx->centerRow - (int)((y / (2.0f * _ctx->maphfactor) +
-	                                   (y<0?-.5f:.5f)) - (col%2?.5f:0.0f));
-	if (col >=0 && col < _ctx->map->numCols && row >= 0 && row < _ctx->map->numRows) {
-		_ctx->map->col = col;
-		_ctx->map->row = row;
-		if (hexcol) *hexcol = col;
-		if (hexrow) *hexrow = row;
-		ret = TRUE;
-	}
-	return ret;
-}
-
-void MapRenderer::selectHex(unsigned int col, unsigned int row) {
-	Map *map = _ctx->map.get();
-	if (map->selectedUnit) {
-		if (map->selectedUnit->row == row && map->selectedUnit->col == col) {
-			// Select again so deselect.
-			deSelectUnit(map);
-		} else {  // Move here if it can.
-			if (map->tiles[row][col].currentMoveCost <= map->selectedUnit->movement) {
-				map->selectedUnit->movement -= map->tiles[row][col].currentMoveCost;
-				moveUnit(map, map->selectedUnit, row, col);
-//				selectUnit(map, map->selectedUnit);
-				deSelectUnit(map);
-			}
-		}
-	} else {  // If there is a unit to select then select it.
-		if (map->tiles[row][col].numUnits) {
-			selectUnit(map, map->tiles[row][col].units[0]);
-		}
-	}
-}
-
-void MapRenderer::moveUp() {
-	Map *map = _ctx->map.get();
-	unsigned int centerRow, centerCol, rowsDisplayed, colsDisplayed;
-	if (map->row > 0) map->row--;
-	getMapDisplayCenter(centerRow, centerCol,
-	                    rowsDisplayed, colsDisplayed);
-	if (map->row < (centerRow - (rowsDisplayed / 2))) {
-		setMapDisplayCenter(map->row, centerCol);
-	}
-}
-
-void MapRenderer::moveDown() {
-	Map *map = _ctx->map.get();
-	unsigned int centerRow, centerCol, rowsDisplayed, colsDisplayed;
-	if (map->row < (map->numRows-1)) map->row++;
-	getMapDisplayCenter(centerRow, centerCol,
-	                    rowsDisplayed, colsDisplayed);
-	if (map->row > (centerRow + (rowsDisplayed / 2))) {
-		setMapDisplayCenter(map->row, centerCol);
-	}
 }
 
 } }

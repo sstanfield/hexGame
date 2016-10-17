@@ -1,7 +1,7 @@
 #pragma once
 
 #include "glwidget.h"
-#include "render/maprender.h"
+#include "render/minimaprender.h"
 
 #include <memory>
 
@@ -9,14 +9,14 @@ namespace hexgame {
 namespace gui {
 
 /**
- * Base class for widgets that render themselves using OpenGL.
+ * Display and manage the mini-map.
  */
-class MapWidget : public GLWidget {
+class MiniMapWidget : public GLWidget {
 public:
-	TBOBJECT_SUBCLASS(MapWidget, GLWidget);
+	TBOBJECT_SUBCLASS(MiniMapWidget, GLWidget);
 
-	MapWidget();
-	~MapWidget() override;
+	MiniMapWidget();
+	~MiniMapWidget() override;
 
 	bool OnEvent(const tb::TBWidgetEvent &ev) override;
 	void OnResized(int old_w, int old_h) override;
@@ -28,7 +28,7 @@ protected:
 
 private:
 	std::shared_ptr<Map> map;
-	std::unique_ptr<render::MapRenderer> maprenderer;
+	std::unique_ptr<render::MiniMapRenderer> minimaprenderer;
 };
 
 }

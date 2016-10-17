@@ -29,30 +29,23 @@ freely, subject to the following restrictions:
 
 namespace hexgame { namespace render {
 
-class MapRenderer {
+class MiniMapRenderer {
 public:
-	MapRenderer(std::shared_ptr<Map> map, int width, int height, std::string assetDir);
-	~MapRenderer();
+	MiniMapRenderer(std::shared_ptr<Map> map, int width, int height, std::string assetDir);
+	~MiniMapRenderer();
 
 	void resizeMap(int width, int height);
-	void renderMap(bool mini);
+	void renderMap();
 	void miniMapDirty();
 	void getMapDisplayCenter(unsigned int& centerRow, unsigned int& centerCol,
 	                         unsigned int& rowsDisplayed, unsigned int& colsDisplayed);
 	void setMapDisplayCenter(int displayCenterRow, int displayCenterCol);
-	void zoomInMap();
-	void zoomOutMap();
 
-	void getMapPostion(int *x, int *y, int *width, int *height);
 	void getMiniMapPostion(int *x, int *y, int *width, int *height);
 	bool setCenterMiniMap(float x, float y, int *hexcol, int *hexrow);
 	bool setCenterMap(float x, float y, int *hexcol, int *hexrow);
 
 	void updateMapDimensions(int width, int height);
-
-	void selectHex(unsigned int col, unsigned int row);
-	void moveUp();
-	void moveDown();
 
 private:
 	struct CTX;
