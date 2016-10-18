@@ -78,6 +78,9 @@ Application::Application(std::unique_ptr<ServicesInterface> services, int width,
 	root->SetFocus(tb::WIDGET_FOCUS_REASON_UNKNOWN);
 
 	map = std::shared_ptr<Map>(allocMap(100, 100, Grass));
+	int row = 0;
+	for (int col = 0; col < 100; col++)
+		map->tiles[row++][col].type = Mountain;
 	int u1move = aquireMoveCost(map->unitCtx, 2, 4, 5, 3, 4, 0, 0, 0, 1, 2, 1);
 	Unit *u1 = newUnit(map->unitCtx, Side_Black, "Test Cav", 3, 5, 20, u1move);
 	placeUnit(map.get(), u1, 50, 50);

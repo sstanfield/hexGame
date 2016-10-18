@@ -195,7 +195,9 @@ struct MiniMapRenderer::CTX {
 		if (!miniMapDirty) return;
 		// Save map so we can blit it directly until dirty.
 		if (miniMap) {
-			glReadPixels(0, 0, width, height,
+			GLint v[4];
+			glGetIntegerv(GL_VIEWPORT, v);
+			glReadPixels(v[0], v[1], width, height,
 					GL_RGBA, GL_UNSIGNED_BYTE, miniMap);
 			glBindTexture(GL_TEXTURE_2D, miniMapTexture);
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
@@ -495,7 +497,7 @@ MiniMapRenderer::~MiniMapRenderer() {
 	}
 }
 
-void MiniMapRenderer::updateMapDimensions(int width, int height) {
+void MiniMapRenderer::resizeMap(int width, int height) {
 	Map *map = _ctx->map.get();
 	_ctx->width = width;
 	_ctx->height = height;
@@ -541,10 +543,6 @@ void MiniMapRenderer::updateMapDimensions(int width, int height) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 //	glGenerateMipmap(GL_TEXTURE_2D);
-}
-
-void MiniMapRenderer::resizeMap(int width, int height) {
-	updateMapDimensions(width, height);
 }
 
 void MiniMapRenderer::renderMap() {
@@ -627,7 +625,7 @@ void MiniMapRenderer::renderMap() {
 		}
 	}
 
-	//_ctx->saveMiniMap();
+	_ctx->saveMiniMap();
 	_ctx->miniMapLocMarker();
 }
 

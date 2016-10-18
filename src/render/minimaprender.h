@@ -45,8 +45,6 @@ public:
 	bool setCenterMiniMap(float x, float y, int *hexcol, int *hexrow);
 	bool setCenterMap(float x, float y, int *hexcol, int *hexrow);
 
-	void updateMapDimensions(int width, int height);
-
 private:
 	struct CTX;
 	std::unique_ptr<CTX> _ctx;
