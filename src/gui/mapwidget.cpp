@@ -47,7 +47,7 @@ bool MapWidget::OnEvent(const tb::TBWidgetEvent &ev)
 				maprenderer->moveUp();
 				break;
 			case tb::TB_KEY_RIGHT:
-				if (map->col < (map->numCols-1)) map->col++;
+				if (map->col < (map->numCols()-1)) map->col++;
 				maprenderer->getMapDisplayCenter(centerRow, centerCol,
 						rowsDisplayed, colsDisplayed);
 				if (map->col > (centerCol + (colsDisplayed / 2))) {
@@ -118,7 +118,7 @@ void MapWidget::initGL() {
 }
 
 void MapWidget::render() {
-	maprenderer->renderMap(FALSE);  // Main map.
+	maprenderer->renderMap(false);  // Main map.
 }
 
 void MapWidget::OnInflate(const tb::INFLATE_INFO &info) {

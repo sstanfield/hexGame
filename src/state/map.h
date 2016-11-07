@@ -20,18 +20,24 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source
    distribution.
 */
-#ifndef MAP_H
-#define MAP_H
+#pragma once
 
 #include "city.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string>
+#include <memory>
+#include <vector>
 
-#define MAX_STACK_SIZE 8
+namespace hexgame {
+namespace state {
 
-typedef enum {
+constexpr int max_stack_size = 8;
+constexpr int max_rows = 600;
+constexpr int max_cols = 600;
+constexpr int min_rows = 20;
+constexpr int min_cols = 20;
+
+enum class TileType {
 	Grass,
 	Forest,
 	Swamp,
@@ -41,60 +47,68 @@ typedef enum {
 	Water,
 	Temple,
 	Ruin,
-	CityCenter,
-	City1,
-	City2,
-	City3,
-	City4,
-	City5,
-	City6
-} TileType;
+	City,
+};
 
-typedef struct {
+struct Tile {
 	TileType type;
-	Bool frozen;
-	Bool road;
+	bool frozen = false;
+	bool road = false;
+	const uint row;
+	const uint col;
+	uint currentMoveCost = 0;
+	bool stacked = false;
+	int  numUnits = 0;
+	std::array<Unit *, max_stack_size> units;
+
+	Tile(uint row, uint col) : row(row), col(col) { }
+	~Tile() = default;
+
+	using u_ptr = std::unique_ptr<Tile>;
+};
+
+class map_alloc_error : std::runtime_error {
+public:
+	map_alloc_error(std::string m) : std::runtime_error(m) { }
+};
+
+class Map {
+public:
+	Map(uint rows, uint cols, TileType defaultType);
+	Map(std::string file);
+	~Map();
+	void write(std::string file);
+
+	uint numRows() const { return tiles.size(); }
+	uint numCols() const { return tiles[0].size(); }
+
+	void placeUnit(Unit* unit, uint row, uint col);
+	void moveUnit(Unit *unit, uint row, uint col);
+	void killUnit(Unit *unit);
+	void killTile(uint row, uint col);
+	void selectUnit(Unit *unit);
+	void deSelectUnit();
+
+	const City& addCity(std::string name, uint row, uint col, uint walls);
+	const City* getCity(uint row, uint col);
+
+	Tile& tile(uint row, uint col) { return *tiles[row][col]; }
+
+	CityManager cities;
+	UnitManager units;
+
 	uint row;
 	uint col;
-	uint currentMoveCost;
-	Bool stacked;
-	int  numUnits;
-	Unit **units;
-} Tile;
+	Unit* selectedUnit = nullptr;
 
-typedef struct {
-	Tile **tiles;
-	uint numRows;
-	uint numCols;
-	uint row;
-	uint col;
-	Unit *selectedUnit;
+	using s_ptr = std::shared_ptr<Map>;
 
-	CityContext cityCtx;
-	UnitContext unitCtx;
-} Map;
+private:
+	std::vector<std::vector<Tile::u_ptr>> tiles;
 
-Map *allocMap(uint rows, uint cols, TileType defaultType);
-void freeMap(Map *map);
-Map *readMap(char *file);
-void writeMap(Map *map, char *file);
+	void allocMap(uint rows, uint cols, TileType defaultType);
+	void removeUnit(Unit* unit);
+};
 
-void placeUnit(Map *map, Unit *unit, uint row, uint col);
-void moveUnit(Map *map, Unit *unit, uint row, uint col);
-void killUnit(Map *map, Unit *unit);
-void killTile(Map *map, uint row, uint col);
-void selectUnit(Map *map, Unit *unit);
-void deSelectUnit(Map *map);
-
-City *addCity(Map *map, char *name, uint row, uint col, uint walls);
-void addCityProd(Map *map, uint id, char *basename, uint time, uint cost,
-                 uint upkeep, uint strength, uint movement);
-uint numCities(Map *map);
-City *getCity(Map *map, uint row, uint col);
-
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // MAP_H
+} //state
+} // hexgame

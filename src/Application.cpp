@@ -77,13 +77,13 @@ Application::Application(std::unique_ptr<ServicesInterface> services, int width,
 	root->SetIsFocusable(true);
 	root->SetFocus(tb::WIDGET_FOCUS_REASON_UNKNOWN);
 
-	map = std::shared_ptr<Map>(allocMap(100, 100, Grass));
+	map = std::make_shared<state::Map>(100, 100, state::TileType::Grass);
 	int row = 0;
 	for (int col = 0; col < 100; col++)
-		map->tiles[row++][col].type = Mountain;
-	int u1move = aquireMoveCost(map->unitCtx, 2, 4, 5, 3, 4, 0, 0, 0, 1, 2, 1);
-	Unit *u1 = newUnit(map->unitCtx, Side_Black, "Test Cav", 3, 5, 20, u1move);
-	placeUnit(map.get(), u1, 50, 50);
+		map->tile(row++, col).type = state::TileType::Mountain;
+	int u1move = map->units.aquireMoveCost(2, 4, 5, 3, 4, 0, 0, 0, 1, 2, 1);
+	state::Unit *u1 = map->units.newUnit(state::Side::Side_Black, "Test Cav", 3, 5, 20, u1move);
+	map->placeUnit(u1, 50, 50);
 
 	printf("XXX call lua\n");
 	std::string layout = Settings::i()->getAssetDir()+"layouts/main.lua";

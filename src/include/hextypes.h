@@ -22,33 +22,11 @@ freely, subject to the following restrictions:
 */
 #pragma once
 
-#include "state/map.h"
+namespace hexgame {
 
-#include <memory>
-#include <string>
+using uint = unsigned int;
+using ulong = unsigned long;
+using byte = unsigned char;
 
-namespace hexgame { namespace render {
-
-class MiniMapRenderer {
-public:
-	MiniMapRenderer(state::Map::s_ptr map, int width, int height, std::string assetDir);
-	~MiniMapRenderer();
-
-	void resizeMap(int width, int height);
-	void renderMap();
-	void miniMapDirty();
-	void getMapDisplayCenter(unsigned int& centerRow, unsigned int& centerCol,
-	                         unsigned int& rowsDisplayed, unsigned int& colsDisplayed);
-	void setMapDisplayCenter(int displayCenterRow, int displayCenterCol);
-
-	void getMiniMapPostion(int *x, int *y, int *width, int *height);
-	bool setCenterMiniMap(float x, float y, int *hexcol, int *hexrow);
-	bool setCenterMap(float x, float y, int *hexcol, int *hexrow);
-
-private:
-	struct CTX;
-	std::unique_ptr<CTX> _ctx;
-};
-
-} }
+}
 

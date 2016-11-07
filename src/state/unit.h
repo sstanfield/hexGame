@@ -20,16 +20,17 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source
    distribution.
 */
-#ifndef UNIT_H
-#define UNIT_H
+#pragma once
 
-#include "gtypes.h"
+#include "hextypes.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string>
+#include <memory>
 
-typedef enum {
+namespace hexgame {
+namespace state {
+
+enum class Side {
 	Side_Black = 0,
 	Side_White,
 	Side_Red,
@@ -39,11 +40,12 @@ typedef enum {
 	Side_Yellow,
 	Side_Purple,
 	Side_Grey  // Neutral (i.e. no side).
-} Side;
-#define NUM_SIDES Side_Grey
+};
+constexpr int num_sides = static_cast<int>(Side::Side_Grey);
 
-#define INVALID_MOVECOST -1;
-typedef struct {
+constexpr int invalid_movecost  = -1;
+
+struct MoveCost {
 	int  id;
 	uint grass;
 	uint forest;
@@ -56,39 +58,45 @@ typedef struct {
 	uint bridge;
 	uint road;
 	uint city;
-} MoveCost;
 
-typedef struct {
+	using u_ptr = std::unique_ptr<MoveCost>;
+};
+
+struct Unit {
 	uint id;
 	Side side;
-	char *name;
+	std::string name;
 	uint upkeep;
 	uint strength;
 	uint movement;
 	uint moveCostId;
 	uint baseMovePoints;
-	uint row;
-	uint col;
-} Unit;
+	uint row = 0;
+	uint col = 0;
 
-typedef void *UnitContext;
+	using u_ptr = std::unique_ptr<Unit>;
+};
 
-UnitContext initUnits();
-void freeUnits(UnitContext ctx);
+class UnitManager {
+public:
+	UnitManager();
+	~UnitManager();
 
-Unit *newUnit(UnitContext ctx, Side side, char *name, uint upkeep,
+	Unit *newUnit(Side sidet, std::string name, uint upkeep,
               uint strength, uint movement, uint moveCostId);
-void deleteUnit(UnitContext ctx, Unit *unit);
+	void deleteUnit(Unit *unit);
 
-int aquireMoveCost(UnitContext ctx, uint grass, uint forest, uint swamp,
+	int aquireMoveCost(uint grass, uint forest, uint swamp,
                    uint desert, uint hill, uint mountain, uint water,
                    uint shore, uint bridge, uint road, uint city);
-MoveCost *getMoveCost(UnitContext ctx, int id);
+	MoveCost *getMoveCost(int id);
 
-void resetMovePoints(UnitContext ctx, Side side);
+	void resetMovePoints(Side sidet);
+private:
+	struct UnitContext;
+	std::unique_ptr<UnitContext> _ctx;
+};
 
-#ifdef __cplusplus
-}
-#endif
+} //state
+} // hexgame
 
-#endif // UNIT_H

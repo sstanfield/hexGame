@@ -49,29 +49,29 @@ static GLuint genBuffer(const GLfloat *buffer, int size) {
 	return bufferID;
 }
 
-static void getTileColor(TileType type, float *color) {
+static void getTileColor(state::TileType type, float *color) {
 	switch (type) {
-		case Grass: color[0] = 0.0; color[1]  = .76; color[2] = 0.0; break;
-		case Forest: color[0] = 0.22; color[1] = .416; color[2] = 0.122; break;
-		case Swamp: color[0] = 0.0; color[1]  = .76; color[2] = 0.522; break;
-		            //	case Desert: ret = desertTex; break;
-		case Hill: color[0] = 0.863; color[1] = .667; color[2] = 0.208; break;
-		case Mountain: color[0] = 0.475; color[1] = .467; color[2] = 0.443; break;
-		case Water: color[0] = 0.09; color[1] = .886; color[2] = 0.902; break;
-		            //	case Temple: ret = templeTex; break;
-		            //	case Ruin: ret = ruinTex; break;
-		case CityCenter: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City1: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City2: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City3: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City4: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City5: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City6: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
+		case state::TileType::Grass: color[0] = 0.0; color[1]  = .76; color[2] = 0.0; break;
+		case state::TileType::Forest: color[0] = 0.22; color[1] = .416; color[2] = 0.122; break;
+		case state::TileType::Swamp: color[0] = 0.0; color[1]  = .76; color[2] = 0.522; break;
+
+		// XXX Fixme...
+		case state::TileType::Desert: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
+		case state::TileType::Hill: color[0] = 0.863; color[1] = .667; color[2] = 0.208; break;
+		case state::TileType::Mountain: color[0] = 0.475; color[1] = .467; color[2] = 0.443; break;
+		case state::TileType::Water: color[0] = 0.09; color[1] = .886; color[2] = 0.902; break;
+
+		// XXX Fixme...
+		case state::TileType::Temple: color[0] = 0.5; color[1] = 0.5; color[2] = 0.5; break;
+
+		// XXX Fixme...
+		case state::TileType::Ruin: color[0] = 0.6; color[1] = 0.6; color[2] = 0.6; break;
+		case state::TileType::City: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
 	}
 }
 
 struct MapRenderer::CTX {
-	std::shared_ptr<Map> map;
+	state::Map::s_ptr map;
 
 	int width;
 	int height;
@@ -93,7 +93,7 @@ struct MapRenderer::CTX {
 	float minihfactor;
 	float miniwfactor;
 
-	Bool   miniMapDirty;
+	bool   miniMapDirty;
 	byte  *miniMap;
 	GLuint miniMapTexture;
 
@@ -162,43 +162,31 @@ struct MapRenderer::CTX {
 	GLuint forestTex;
 	GLuint mountainTex;
 	GLuint swampTex;
-	GLuint cityCenterTex;
-	GLuint city1Tex;
-	GLuint city2Tex;
-	GLuint city3Tex;
-	GLuint city4Tex;
-	GLuint city5Tex;
-	GLuint city6Tex;
+	GLuint cityTex;
 	GLuint unitDefault;
 
 
-	GLuint getTileTexture(TileType type) {
+	GLuint getTileTexture(state::TileType type) {
 		GLuint ret;
 		switch (type) {
-			case Grass: ret = grassTex; break;
-			case Forest: ret = forestTex; break;
-			case Swamp: ret = swampTex; break;
-			            //	case Desert: ret = desertTex; break;
-			case Hill: ret = hillTex; break;
-			case Mountain: ret = mountainTex; break;
-			case Water: ret = waterTex; break;
-			            //	case Temple: ret = templeTex; break;
-			            //	case Ruin: ret = ruinTex; break;
-			case CityCenter: ret = cityCenterTex; break;
-			case City1: ret = city1Tex; break;
-			case City2: ret = city2Tex; break;
-			case City3: ret = city3Tex; break;
-			case City4: ret = city4Tex; break;
-			case City5: ret = city5Tex; break;
-			case City6: ret = city6Tex; break;
+			case state::TileType::Grass: ret = grassTex; break;
+			case state::TileType::Forest: ret = forestTex; break;
+			case state::TileType::Swamp: ret = swampTex; break;
+			            //	case state::TileType::Desert: ret = desertTex; break;
+			case state::TileType::Hill: ret = hillTex; break;
+			case state::TileType::Mountain: ret = mountainTex; break;
+			case state::TileType::Water: ret = waterTex; break;
+			            //	case state::TileType::Temple: ret = templeTex; break;
+			            //	case state::TileType::Ruin: ret = ruinTex; break;
+			case state::TileType::City: ret = cityTex; break;
 		}
 		return ret;
 	}
 
-	void drawHex(const float *center, Bool mini,
-			int row, int col) {
-		Bool isSelected = col==map->col&&row==map->row;
-		TileType type = map->tiles[row][col].type;
+	void drawHex(const float *center, bool mini,
+			uint row, uint col) {
+		bool isSelected = col==map->col&&row==map->row;
+		state::TileType& type = map->tile(row, col).type;
 
 		if (mini) {
 			glUseProgram(hexminiprog->id());
@@ -240,12 +228,12 @@ struct MapRenderer::CTX {
 			vertexbuffer = hexleftvertexbuffer;
 			uvbuffer = hexleftuvbuffer;
 		}
-		if (col == (map->numCols - 1)) {
+		if (col == (map->numCols() - 1)) {
 			vertexbuffer = hexrightvertexbuffer;
 			uvbuffer = hexrightuvbuffer;
 		}
 		if (row == 0 && (col % 2)) {
-			if (col == (map->numCols - 1)) {
+			if (col == (map->numCols() - 1)) {
 				vertexbuffer = hextoprightvertexbuffer;
 				uvbuffer = hextoprightuvbuffer;
 			} else {
@@ -253,8 +241,8 @@ struct MapRenderer::CTX {
 				uvbuffer = hextopuvbuffer;
 			}
 		}
-		if (row == (map->numRows - 1) && !(col % 2)) {
-			if (col == (map->numCols - 1)) {
+		if (row == (map->numRows() - 1) && !(col % 2)) {
+			if (col == (map->numCols() - 1)) {
 				vertexbuffer = hexbottomrightvertexbuffer;
 				uvbuffer = hexbottomrightuvbuffer;
 			} else {
@@ -262,7 +250,7 @@ struct MapRenderer::CTX {
 				uvbuffer = hexbottomuvbuffer;
 			}
 		}
-		if (row == (map->numRows - 1) && col == 0) {
+		if (row == (map->numRows() - 1) && col == 0) {
 			vertexbuffer = hexbottomleftvertexbuffer;
 			uvbuffer = hexbottomleftuvbuffer;
 		}
@@ -307,13 +295,13 @@ struct MapRenderer::CTX {
 			GLboolean depthTest;
 			glGetBooleanv(GL_DEPTH_TEST, &depthTest);
 			if (depthTest) glDisable(GL_DEPTH_TEST);
-			if (map->tiles[row][col].units) {
+			if (map->tile(row, col).numUnits > 0) {
 				glBindTexture(GL_TEXTURE_2D, unitDefault);
 				//			printf("XXX Draw unit %d, %d\n", row, col);
 				glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, NULL);
 			}
-			if (map->selectedUnit && map->tiles[row][col].currentMoveCost &&
-					map->tiles[row][col].currentMoveCost <= map->selectedUnit->movement) {
+			if (map->selectedUnit && map->tile(row, col).currentMoveCost &&
+					map->tile(row, col).currentMoveCost <= map->selectedUnit->movement) {
 				//			printf("XXX MARK MOVE %d, %d\n", row, col);
 				glUseProgram(hexoverlayprog->id());
 				glUniform1f(hexOverlayHeightFactor, maphfactor);
@@ -337,14 +325,14 @@ struct MapRenderer::CTX {
 			glBindTexture(GL_TEXTURE_2D, miniMapTexture);
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, miniwidth, miniheight,
 					GL_RGBA, GL_UNSIGNED_BYTE, miniMap);
-			miniMapDirty = FALSE;
+			miniMapDirty = false;
 		}
 	}
 
 	void miniMapLocMarker() {
 		// Mini Map location marker.
-		int halfX = (map->numCols / 2);
-		int halfY = (map->numRows / 2);
+		int halfX = (map->numCols() / 2);
+		int halfY = (map->numRows() / 2);
 		glUseProgram(minilocprog->id());
 		float hfac = (1.0f / maphfactor) * minihfactor;// / (float)(map->numRows);
 		float wfac = (1.0f / mapwfactor) * miniwfactor;// / ((float)map->numCols*.75f);
@@ -377,14 +365,14 @@ struct MapRenderer::CTX {
 
 };
 
-MapRenderer::MapRenderer(std::shared_ptr<Map> map, int width, int height, std::string assetDir) {
+MapRenderer::MapRenderer(state::Map::s_ptr map, int width, int height, std::string assetDir) {
 	_ctx = std::make_unique<CTX>();
 	_ctx->zoomLevel = 1;
 	_ctx->mapScale = zoomLevels[_ctx->zoomLevel];
 	_ctx->map = map;
 	_ctx->centerRow = map->row;
 	_ctx->centerCol = map->col;
-	_ctx->miniMapDirty = TRUE;
+	_ctx->miniMapDirty = true;
 	_ctx->hexprog = LoadShadersFromFile(assetDir + "shaders/HexVertex.glsl",
 	                                  assetDir + "shaders/HexFragment.glsl");
 	_ctx->heightFactor = glGetUniformLocation(_ctx->hexprog->id(), "heightFactor");
@@ -634,13 +622,7 @@ MapRenderer::MapRenderer(std::shared_ptr<Map> map, int width, int height, std::s
 	_ctx->forestTex  = read_png_file((assetDir + "tiles/forest_tile.png").c_str());
 	_ctx->mountainTex  = read_png_file((assetDir + "tiles/mountain_tile.png").c_str());
 	_ctx->swampTex  = read_png_file((assetDir + "tiles/swamp_tile.png").c_str());
-	_ctx->cityCenterTex  = read_png_file((assetDir + "tiles/citycenter_tile.png").c_str());
-	_ctx->city1Tex  = read_png_file((assetDir + "tiles/city1_tile.png").c_str());
-	_ctx->city2Tex  = read_png_file((assetDir + "tiles/city2_tile.png").c_str());
-	_ctx->city3Tex  = read_png_file((assetDir + "tiles/city3_tile.png").c_str());
-	_ctx->city4Tex  = read_png_file((assetDir + "tiles/city4_tile.png").c_str());
-	_ctx->city5Tex  = read_png_file((assetDir + "tiles/city5_tile.png").c_str());
-	_ctx->city6Tex  = read_png_file((assetDir + "tiles/city6_tile.png").c_str());
+	_ctx->cityTex  = read_png_file((assetDir + "tiles/citycenter_tile.png").c_str());
 	_ctx->unitDefault  = read_png_file((assetDir + "units/default_unit.png").c_str());
 	doGLError("MapRenderer::MapRenderer");
 }
@@ -673,13 +655,7 @@ MapRenderer::~MapRenderer() {
 	glDeleteTextures(1, &_ctx->forestTex);
 	glDeleteTextures(1, &_ctx->mountainTex);
 	glDeleteTextures(1, &_ctx->swampTex);
-	glDeleteTextures(1, &_ctx->cityCenterTex);
-	glDeleteTextures(1, &_ctx->city1Tex);
-	glDeleteTextures(1, &_ctx->city2Tex);
-	glDeleteTextures(1, &_ctx->city3Tex);
-	glDeleteTextures(1, &_ctx->city4Tex);
-	glDeleteTextures(1, &_ctx->city5Tex);
-	glDeleteTextures(1, &_ctx->city6Tex);
+	glDeleteTextures(1, &_ctx->cityTex);
 
 	glDeleteVertexArrays(1, &_ctx->vertexArrayID);
 
@@ -690,7 +666,7 @@ MapRenderer::~MapRenderer() {
 }
 
 void MapRenderer::updateMapDimensions(int width, int height) {
-	Map *map = _ctx->map.get();
+	state::Map *map = _ctx->map.get();
 	_ctx->width = width;
 	_ctx->height = height;
 
@@ -722,8 +698,8 @@ void MapRenderer::updateMapDimensions(int width, int height) {
 		_ctx->miniwfactor = 1;
 	}
 	_ctx->minihfactor *= HEX_HEIGHT_ADJUST;
-	float s1 = 1.0f / ((float)map->numRows*_ctx->minihfactor);
-	float s2 = 1.0f / ((float)(map->numCols/2)*1.5f*_ctx->miniwfactor);
+	float s1 = 1.0f / ((float)map->numRows()*_ctx->minihfactor);
+	float s2 = 1.0f / ((float)(map->numCols()/2)*1.5f*_ctx->miniwfactor);
 	float miniScale = s1<s2?s1:s2;
 	_ctx->minihfactor *= miniScale;
 	_ctx->miniwfactor *= miniScale;
@@ -745,7 +721,7 @@ void MapRenderer::updateMapDimensions(int width, int height) {
 	int miniMapMemSize = _ctx->miniheight * _ctx->miniwidth * sizeof(byte) * 4;
 	_ctx->miniMap = (byte *)malloc(miniMapMemSize);
 	memset(_ctx->miniMap, 255, miniMapMemSize);
-	_ctx->miniMapDirty = TRUE;
+	_ctx->miniMapDirty = true;
 	glGenTextures(1, &_ctx->miniMapTexture);
 
 	// Store the mini map as a texture to avoid generating it needlessly (it is expensive).
@@ -767,7 +743,7 @@ void MapRenderer::resizeMap(int width, int height) {
 }
 
 void MapRenderer::renderMap(bool mini) {
-	Map *map = _ctx->map.get();
+	state::Map *map = _ctx->map.get();
 	if (mini) {
 		/*glViewport(_ctx->miniStartX,
 		           _ctx->miniStartY,
@@ -820,8 +796,8 @@ void MapRenderer::renderMap(bool mini) {
 	int numX;
 	int numY;
 	if (mini) {
-		numX = map->numCols;
-		numY = map->numRows;
+		numX = map->numCols();
+		numY = map->numRows();
 	} else {
 		numX = (int)(1.0f / _ctx->mapwfactor) + 1;
 		numX += (numX / 4) + 6;  //  These are interleaved so need some padding.
@@ -861,7 +837,7 @@ void MapRenderer::renderMap(bool mini) {
 		for (row = -halfY; row <= halfY; row++) {
 			c[1] = (2.0f * row)+(mcol%2?1.0f:0.0f);
 			int mrow = mini?halfX-row:_ctx->centerRow-row;
-			if (mrow >= 0 && mrow < map->numRows && mcol >=0 && mcol < map->numCols) {
+			if (mrow >= 0 && mrow < (int)map->numRows() && mcol >=0 && mcol < (int)map->numCols()) {
 				_ctx->drawHex(c , mini, mrow, mcol);
 			}
 		}
@@ -879,7 +855,7 @@ void MapRenderer::renderMap(bool mini) {
 }
 
 void MapRenderer::miniMapDirty() {
-	_ctx->miniMapDirty = TRUE;
+	_ctx->miniMapDirty = true;
 }
 
 void MapRenderer::getMapDisplayCenter(unsigned int& centerRow, unsigned int& centerCol,
@@ -931,60 +907,60 @@ void MapRenderer::getMiniMapPostion(int *x, int *y,
 }
 
 bool MapRenderer::setCenterMiniMap(float x, float y, int *hexcol, int *hexrow) {
-	Bool ret = FALSE;
-	int col = (x / (1.5f * _ctx->miniwfactor)) + (_ctx->map->numCols / 2);
+	bool ret = false;
+	int col = (x / (1.5f * _ctx->miniwfactor)) + (_ctx->map->numCols() / 2);
 	int row = -(y / (2.0f * _ctx->minihfactor) - (col%2?1.0f:0.0f))
-	                 + (_ctx->map->numRows / 2);
-	if (col >=0 && col < _ctx->map->numCols && row >= 0 && row < _ctx->map->numRows) {
+	                 + (_ctx->map->numRows() / 2);
+	if (col >=0 && col < (int)_ctx->map->numCols() && row >= 0 && row < (int)_ctx->map->numRows()) {
 		_ctx->map->col = col;
 		_ctx->map->row = row;
 		setMapDisplayCenter(_ctx->map->row, _ctx->map->col);
 		if (hexcol) *hexcol = col;
 		if (hexrow) *hexrow = row;
-		ret = TRUE;
+		ret = true;
 	}
 	return ret;
 }
 
 bool MapRenderer::setCenterMap(float x, float y, int *hexcol, int *hexrow) {
-	Bool ret = FALSE;
+	bool ret = false;
 	int col = _ctx->centerCol + (int)(x / (1.5f * _ctx->mapwfactor) +
 	                                  (x<0?-.5f:.5f));
 	int row = _ctx->centerRow - (int)((y / (2.0f * _ctx->maphfactor) +
 	                                   (y<0?-.5f:.5f)) - (col%2?.5f:0.0f));
-	if (col >=0 && col < _ctx->map->numCols && row >= 0 && row < _ctx->map->numRows) {
+	if (col >=0 && col < (int)_ctx->map->numCols() && row >= 0 && row < (int)_ctx->map->numRows()) {
 		_ctx->map->col = col;
 		_ctx->map->row = row;
 		if (hexcol) *hexcol = col;
 		if (hexrow) *hexrow = row;
-		ret = TRUE;
+		ret = true;
 	}
 	return ret;
 }
 
 void MapRenderer::selectHex(unsigned int col, unsigned int row) {
-	Map *map = _ctx->map.get();
+	state::Map *map = _ctx->map.get();
 	if (map->selectedUnit) {
 		if (map->selectedUnit->row == row && map->selectedUnit->col == col) {
 			// Select again so deselect.
-			deSelectUnit(map);
+			map->deSelectUnit();
 		} else {  // Move here if it can.
-			if (map->tiles[row][col].currentMoveCost <= map->selectedUnit->movement) {
-				map->selectedUnit->movement -= map->tiles[row][col].currentMoveCost;
-				moveUnit(map, map->selectedUnit, row, col);
+			if (map->tile(row, col).currentMoveCost <= map->selectedUnit->movement) {
+				map->selectedUnit->movement -= map->tile(row, col).currentMoveCost;
+				map->moveUnit(map->selectedUnit, row, col);
 //				selectUnit(map, map->selectedUnit);
-				deSelectUnit(map);
+				map->deSelectUnit();
 			}
 		}
 	} else {  // If there is a unit to select then select it.
-		if (map->tiles[row][col].numUnits) {
-			selectUnit(map, map->tiles[row][col].units[0]);
+		if (map->tile(row, col).numUnits) {
+			map->selectUnit(map->tile(row, col).units[0]);
 		}
 	}
 }
 
 void MapRenderer::moveUp() {
-	Map *map = _ctx->map.get();
+	state::Map *map = _ctx->map.get();
 	unsigned int centerRow, centerCol, rowsDisplayed, colsDisplayed;
 	if (map->row > 0) map->row--;
 	getMapDisplayCenter(centerRow, centerCol,
@@ -995,9 +971,9 @@ void MapRenderer::moveUp() {
 }
 
 void MapRenderer::moveDown() {
-	Map *map = _ctx->map.get();
+	state::Map *map = _ctx->map.get();
 	unsigned int centerRow, centerCol, rowsDisplayed, colsDisplayed;
-	if (map->row < (map->numRows-1)) map->row++;
+	if (map->row < (map->numRows()-1)) map->row++;
 	getMapDisplayCenter(centerRow, centerCol,
 	                    rowsDisplayed, colsDisplayed);
 	if (map->row > (centerRow + (rowsDisplayed / 2))) {

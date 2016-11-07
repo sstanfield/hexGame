@@ -46,29 +46,29 @@ static GLuint genBuffer(const GLfloat *buffer, int size) {
 	return bufferID;
 }
 
-static void getTileColor(TileType type, float *color) {
+static void getTileColor(state::TileType type, float *color) {
 	switch (type) {
-		case Grass: color[0] = 0.0; color[1]  = .76; color[2] = 0.0; break;
-		case Forest: color[0] = 0.22; color[1] = .416; color[2] = 0.122; break;
-		case Swamp: color[0] = 0.0; color[1]  = .76; color[2] = 0.522; break;
-		            //	case Desert: ret = desertTex; break;
-		case Hill: color[0] = 0.863; color[1] = .667; color[2] = 0.208; break;
-		case Mountain: color[0] = 0.475; color[1] = .467; color[2] = 0.443; break;
-		case Water: color[0] = 0.09; color[1] = .886; color[2] = 0.902; break;
-		            //	case Temple: ret = templeTex; break;
-		            //	case Ruin: ret = ruinTex; break;
-		case CityCenter: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City1: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City2: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City3: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City4: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City5: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
-		case City6: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
+		case state::TileType::Grass: color[0] = 0.0; color[1]  = .76; color[2] = 0.0; break;
+		case state::TileType::Forest: color[0] = 0.22; color[1] = .416; color[2] = 0.122; break;
+		case state::TileType::Swamp: color[0] = 0.0; color[1]  = .76; color[2] = 0.522; break;
+
+		// XXX Fixme...
+		case state::TileType::Desert: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
+		case state::TileType::Hill: color[0] = 0.863; color[1] = .667; color[2] = 0.208; break;
+		case state::TileType::Mountain: color[0] = 0.475; color[1] = .467; color[2] = 0.443; break;
+		case state::TileType::Water: color[0] = 0.09; color[1] = .886; color[2] = 0.902; break;
+
+		// XXX Fixme...
+		case state::TileType::Temple: color[0] = 0.5; color[1] = 0.5; color[2] = 0.5; break;
+
+		// XXX Fixme...
+		case state::TileType::Ruin: color[0] = 0.6; color[1] = 0.6; color[2] = 0.6; break;
+		case state::TileType::City: color[0] = 0.0; color[1] = 0.0; color[2] = 0.0; break;
 	}
 }
 
 struct MiniMapRenderer::CTX {
-	std::shared_ptr<Map> map;
+	state::Map::s_ptr map;
 
 	int width;
 	int height;
@@ -128,8 +128,7 @@ struct MiniMapRenderer::CTX {
 	GLuint squareidxbuffer;
 
 	void drawHex(const float *center, unsigned int row, unsigned int col) {
-		printf("XXX hex %d, %d\n", row, col);
-		TileType type = map->tiles[row][col].type;
+		state::TileType type = map->tile(row, col).type;
 
 		glUseProgram(hexminiprog->id());
 		glUniform1f(mini_heightFactor, maphfactor);
@@ -147,12 +146,12 @@ struct MiniMapRenderer::CTX {
 			vertexbuffer = hexleftvertexbuffer;
 			uvbuffer = hexleftuvbuffer;
 		}
-		if (col == (map->numCols - 1)) {
+		if (col == (map->numCols() - 1)) {
 			vertexbuffer = hexrightvertexbuffer;
 			uvbuffer = hexrightuvbuffer;
 		}
 		if (row == 0 && (col % 2)) {
-			if (col == (map->numCols - 1)) {
+			if (col == (map->numCols() - 1)) {
 				vertexbuffer = hextoprightvertexbuffer;
 				uvbuffer = hextoprightuvbuffer;
 			} else {
@@ -160,8 +159,8 @@ struct MiniMapRenderer::CTX {
 				uvbuffer = hextopuvbuffer;
 			}
 		}
-		if (row == (map->numRows - 1) && !(col % 2)) {
-			if (col == (map->numCols - 1)) {
+		if (row == (map->numRows() - 1) && !(col % 2)) {
+			if (col == (map->numCols() - 1)) {
 				vertexbuffer = hexbottomrightvertexbuffer;
 				uvbuffer = hexbottomrightuvbuffer;
 			} else {
@@ -169,7 +168,7 @@ struct MiniMapRenderer::CTX {
 				uvbuffer = hexbottomuvbuffer;
 			}
 		}
-		if (row == (map->numRows - 1) && col == 0) {
+		if (row == (map->numRows() - 1) && col == 0) {
 			vertexbuffer = hexbottomleftvertexbuffer;
 			uvbuffer = hexbottomleftuvbuffer;
 		}
@@ -208,8 +207,8 @@ struct MiniMapRenderer::CTX {
 
 	void miniMapLocMarker() {
 		// Mini Map location marker.
-		int halfX = (map->numCols / 2);
-		int halfY = (map->numRows / 2);
+		int halfX = (map->numCols() / 2);
+		int halfY = (map->numRows() / 2);
 		glUseProgram(minilocprog->id());
 		float hfac = (1.0f / maphfactor) * maphfactor;// / (float)(map->numRows);
 		float wfac = (1.0f / mapwfactor) * mapwfactor;// / ((float)map->numCols*.75f);
@@ -242,7 +241,7 @@ struct MiniMapRenderer::CTX {
 
 };
 
-MiniMapRenderer::MiniMapRenderer(std::shared_ptr<Map> map, int width, int height, std::string assetDir) {
+MiniMapRenderer::MiniMapRenderer(state::Map::s_ptr map, int width, int height, std::string assetDir) {
 	_ctx = std::make_unique<CTX>();
 	_ctx->map = map;
 	_ctx->centerRow = map->row;
@@ -498,7 +497,7 @@ MiniMapRenderer::~MiniMapRenderer() {
 }
 
 void MiniMapRenderer::resizeMap(int width, int height) {
-	Map *map = _ctx->map.get();
+	state::Map *map = _ctx->map.get();
 	_ctx->width = width;
 	_ctx->height = height;
 
@@ -517,8 +516,8 @@ void MiniMapRenderer::resizeMap(int width, int height) {
 		_ctx->mapwfactor = 1;
 	}
 	_ctx->maphfactor *= HEX_HEIGHT_ADJUST;
-	float s1 = 1.0f / ((float)map->numRows*_ctx->maphfactor);
-	float s2 = 1.0f / ((float)(map->numCols/2)*1.5f*_ctx->mapwfactor);
+	float s1 = 1.0f / ((float)map->numRows()*_ctx->maphfactor);
+	float s2 = 1.0f / ((float)(map->numCols()/2)*1.5f*_ctx->mapwfactor);
 	float miniScale = s1<s2?s1:s2;
 	_ctx->maphfactor *= miniScale;
 	_ctx->mapwfactor *= miniScale;
@@ -546,7 +545,7 @@ void MiniMapRenderer::resizeMap(int width, int height) {
 }
 
 void MiniMapRenderer::renderMap() {
-	Map *map = _ctx->map.get();
+	state::Map *map = _ctx->map.get();
 	if (!_ctx->miniMapDirty) {
 		GLboolean depthTest;
 		glGetBooleanv(GL_DEPTH_TEST, &depthTest);
@@ -583,8 +582,8 @@ void MiniMapRenderer::renderMap() {
 	}
 	int numX;
 	int numY;
-	numX = map->numCols;
-	numY = map->numRows;
+	numX = map->numCols();
+	numY = map->numRows();
 
 	float c[] = { 0.0f, 0.0f };
 	int row, col;
@@ -619,7 +618,7 @@ void MiniMapRenderer::renderMap() {
 		for (row = -halfY; row <= halfY; row++) {
 			c[1] = (2.0f * row)+(mcol%2?1.0f:0.0f);
 			int mrow = halfX-row;
-			if (mrow >= 0 && mrow < map->numRows && mcol >=0 && mcol < map->numCols) {
+			if (mrow >= 0 && mrow < (int)map->numRows() && mcol >=0 && mcol < (int)map->numCols()) {
 				_ctx->drawHex(c , mrow, mcol);
 			}
 		}
@@ -656,17 +655,17 @@ void MiniMapRenderer::getMiniMapPostion(int *x, int *y,
 }
 
 bool MiniMapRenderer::setCenterMiniMap(float x, float y, int *hexcol, int *hexrow) {
-	Bool ret = FALSE;
-	int col = (x / (1.5f * _ctx->mapwfactor)) + (_ctx->map->numCols / 2);
-	int row = -(y / (2.0f * _ctx->maphfactor) - (col%2?1.0f:0.0f))
-	                   + (_ctx->map->numRows / 2);
-	if (col >=0 && col < _ctx->map->numCols && row >= 0 && row < _ctx->map->numRows) {
+	bool ret = false;
+	unsigned int col = (x / (1.5f * _ctx->mapwfactor)) + (_ctx->map->numCols() / 2);
+	unsigned int row = -(y / (2.0f * _ctx->maphfactor) - (col%2?1.0f:0.0f))
+	                   + (_ctx->map->numRows() / 2);
+	if (col < _ctx->map->numCols() && row < _ctx->map->numRows()) {
 		_ctx->map->col = col;
 		_ctx->map->row = row;
 		setMapDisplayCenter(_ctx->map->row, _ctx->map->col);
 		if (hexcol) *hexcol = col;
 		if (hexrow) *hexrow = row;
-		ret = TRUE;
+		ret = true;
 	}
 	return ret;
 }

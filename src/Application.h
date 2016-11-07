@@ -45,7 +45,7 @@ public:
 	int  numScreens() { return services->numScreens(); }
 	void nextFullscreen() { services->nextFullscreen(); }
 	void quit() { services->quit(); }
-	std::shared_ptr<Map> getMap() { return map; }
+	state::Map::s_ptr getMap() { return map; }
 
 	tb::TBWidget *getRootWidget() { return root.get(); }
 
@@ -55,7 +55,7 @@ private:
 	std::unique_ptr<gui::RootWidget> root;
 	std::unique_ptr<tb::TBRenderer> renderer;
 	std::unique_ptr<ServicesInterface> services;
-	std::shared_ptr<Map> map;
+	state::Map::s_ptr map;
 	tb::TBRect mainRect;
 	double mouseX = 0;
 	double mouseY = 0;

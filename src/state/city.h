@@ -20,49 +20,56 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source
    distribution.
 */
-#ifndef CITY_H
-#define CITY_H
+#pragma once
 
 #include "unit.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string>
+#include <memory>
+#include <vector>
 
-typedef struct {
-	Bool inUse;
-	char *basename;
+namespace hexgame {
+namespace state {
+
+struct UnitProd {
+	std::string basename;
 	uint time;
 	uint cost;
 	uint upkeep;
 	uint strength;
 	uint movement;
-} UnitProd;
 
-typedef struct {
+	using u_ptr = std::unique_ptr<UnitProd>;
+};
+
+struct City {
 	uint id;
 	Side side;
-	char *name;
-	UnitProd units[4];
+	std::string name;
+	std::vector<UnitProd::u_ptr> units;
 	uint row;
 	uint col;
 	uint walls;
-} City;
 
-typedef void *CityContext;
+	using u_ptr = std::unique_ptr<City>;
+};
 
-CityContext _initCities(uint numCities);
-void _freeCities(CityContext ctx);
-City *_newCity(CityContext ctx, char *name, uint row, uint col, uint walls);
-void _addCityProd(CityContext ctx, uint id, char *basename, uint time, uint cost,
-                 uint upkeep, uint strength, uint movement);
-uint _numCities(CityContext ctx);
-City *_getCity(CityContext ctx, uint id);
-City *_firstCity(CityContext ctx);
-City *_nextCity(CityContext ctx);
+class CityManager {
+public:
+	CityManager();
+	~CityManager();
+	const City& newCity(std::string name, uint row, uint col, uint walls);
+	void        addCityProd(uint id, std::string basename, uint time, uint cost,
+	                        uint upkeep, uint strength, uint movement);
+	uint         numCities() const;
+	const City* getCity(uint id) const;
+	const City* firstCity();
+	const City* nextCity();
 
-#ifdef __cplusplus
-}
-#endif
+private:
+	struct CityContext;
+	std::unique_ptr<CityContext> _ctx;
+};
 
-#endif // CITY_H
+} //state
+} // hexgame

@@ -27,7 +27,7 @@ protected:
 	void render() override;
 
 private:
-	std::shared_ptr<Map> map;
+	state::Map::s_ptr map;
 	std::unique_ptr<render::MapRenderer> maprenderer;
 };
 
