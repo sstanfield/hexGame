@@ -54,6 +54,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	include_directories(/usr/include/freetype2)
 
 	add_definitions(-D_P_LINUX)
+	add_definitions(-D_P_POSIX)
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -70,6 +71,7 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_definitions(-D_P_OSX)
 	add_definitions(-DMACOSX)
+	add_definitions(-D_P_POSIX)
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 list(APPEND SOURCE_FILES ${PLATFORM_SOURCE_FILES})
