@@ -22,7 +22,7 @@ freely, subject to the following restrictions:
 */
 #include "shaders.h"
 #include "c_raii.h"
-#include "render/pc/GL/glew.h"
+#include "GL/glew.h"
 #include "render/gl_util.h"
 
 #include <sys/stat.h>
@@ -53,6 +53,7 @@ static GLuint LoadShaders(const std::vector<char>& vertex_shader,
 	if (!Result) {
 		std::vector<char> VertexShaderErrorMessage(InfoLogLength+1, 0);
 		glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, VertexShaderErrorMessage.data());
+		std::cout <<"Unable to compile vertex shader: "+std::string(VertexShaderErrorMessage.data());
 		throw std::invalid_argument("Unable to compile vertex shader: "+std::string(VertexShaderErrorMessage.data()));
 	}
 	doGLError("Failed on vertex compile");
@@ -68,6 +69,7 @@ static GLuint LoadShaders(const std::vector<char>& vertex_shader,
 	if (!Result) {
 		std::vector<char> FragmentShaderErrorMessage(InfoLogLength+1, 0);
 		glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, FragmentShaderErrorMessage.data());
+		std::cout <<"Unable to compile fragment shader: "+std::string(FragmentShaderErrorMessage.data());
 		throw std::invalid_argument("Unable to compile fragment shader: "+std::string(FragmentShaderErrorMessage.data()));
 	}	
 	doGLError("Failed on fragment compile");
@@ -84,6 +86,7 @@ static GLuint LoadShaders(const std::vector<char>& vertex_shader,
 	if (!Result) {
 		std::vector<char> ProgramErrorMessage(InfoLogLength+1, 0);
 		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, ProgramErrorMessage.data());
+		std::cout <<"Unable to link shader: "+std::string(ProgramErrorMessage.data());
 		throw std::invalid_argument("Unable to link shader: "+std::string(ProgramErrorMessage.data()));
 	}
 	doGLError("Failed on link");
@@ -103,9 +106,10 @@ Shader::Shader(const std::string vertex_file_path,
                const std::string fragment_file_path) {
 	std::cout << "Compiling shaders : " << vertex_file_path << ", " << fragment_file_path << "\n";
 	struct stat st;
-	if (stat(vertex_file_path.c_str(), &st) == -1)
+	if (stat(vertex_file_path.c_str(), &st) == -1) {
 		throw std::system_error(std::error_code(errno, std::system_category()),
 		                        "Unable to stat "+vertex_file_path);
+	}
 	// Read the Vertex Shader code from the file
 	std::vector<char> VertexShaderCode(st.st_size+1, 0);
 
@@ -117,9 +121,10 @@ Shader::Shader(const std::string vertex_file_path,
 			VertexShaderCode[c++] = ch;
 	}
 
-	if (stat(fragment_file_path.c_str(), &st) == -1)
+	if (stat(fragment_file_path.c_str(), &st) == -1) {
 		throw std::system_error(std::error_code(errno, std::system_category()),
 		                        "Unable to stat "+fragment_file_path);
+	}
 	// Read the Fragment Shader code from the file
 	std::vector<char> FragmentShaderCode(st.st_size+1, 0);
 

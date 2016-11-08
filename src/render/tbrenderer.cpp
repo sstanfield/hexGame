@@ -5,7 +5,7 @@
 
 #include "tbrenderer.h"
 
-#include "pc/GL/glew.h"
+#include "GL/glew.h"
 #include "glcapabilities.h"
 #include "gl_util.h"
 
@@ -90,8 +90,8 @@ TBRenderer::TBRenderer()
 }
 
 void TBRenderer::initGL() {
-	shader = LoadShadersFromFile(Settings::i()->getAssetDir() + "shaders/tbVert.glsl",
-	                             Settings::i()->getAssetDir() + "shaders/tbFrag.glsl");
+	shader = LoadShadersFromFile(Settings::i()->getShaderDir() + "tbVert.glsl",
+	                             Settings::i()->getShaderDir() + "tbFrag.glsl");
 	mvp_handle = glGetUniformLocation(shader->id(), "MVP");
 	glGenBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);

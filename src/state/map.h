@@ -27,6 +27,7 @@ freely, subject to the following restrictions:
 #include <string>
 #include <memory>
 #include <vector>
+#include <array>
 
 namespace hexgame {
 namespace state {

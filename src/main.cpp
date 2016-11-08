@@ -22,7 +22,8 @@ freely, subject to the following restrictions:
 */
 #include "Application.h"
 #include "render/shaders.h"
-#include "render/pc/GL/glew.h"
+//#include "render/pc/GL/glew.h"
+#include "GL/glew.h"
 #include "render/imageutils.h"
 #include "render/maprender.h"
 #include "util/string.h"
@@ -30,17 +31,21 @@ freely, subject to the following restrictions:
 #include "tb_widgets.h"
 #include "settings.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ifdef __EMSCRIPTEN__
+#include "emscripten.h"
+#endif
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <string>
-#include <signal.h>
+#include <csignal>
 #include <thread>
 #include <chrono>
 
 static bool running = true;
 
-static uint turn = 1;
+static unsigned int turn = 1;
 
 static char *assetDir;
 
@@ -114,33 +119,39 @@ static void render(GLFWwindow *window) {
 }
 
 static double lastFpsTime = -1;
-static void idle(GLFWwindow *window) {
+static void idle() {
 	if (!running) {
-		//loWshutdown(ctx);
+#ifdef __EMSCRIPTEN__
+		emscripten_cancel_main_loop();
+#endif
 		return;
 	}
 	double curtime = glfwGetTime();
 	if (lastFpsTime == -1) lastFpsTime = curtime;
-	double renderStart = glfwGetTime();
+	//double renderStart = glfwGetTime();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	app->processFrame();
 	//render(window);
-	double renderEnd = glfwGetTime();
-	float renderTime = (float)( renderEnd - renderStart);
+	//double renderEnd = glfwGetTime();
+	//float renderTime = (float)( renderEnd - renderStart);
 
-	float rFPS = 1.0f / renderTime;
-	if (rFPS > 30) {
+	//float rFPS = 1.0f / renderTime;
+	/*if (rFPS > 30) {
 		float sleep = (1.0f / 30.0f) - renderTime;
 		//std::this_thread::sleep_for(std::chrono::nanoseconds((long)(sleep * 1e9)));
-	}
+	}*/
 
-	float secondsPerFrame = (float)(curtime - lastFpsTime);
+	//float secondsPerFrame = (float)(curtime - lastFpsTime);
 
-	if (secondsPerFrame > 0) {
+	/*if (secondsPerFrame > 0) {
 		float FPS = 1.0f / secondsPerFrame;
 		//printf("FPS: %f\n", FPS);
-	}
+	}*/
 	lastFpsTime           = curtime;
+
+	/* Poll for and process events */
+	glfwPollEvents();
+
 }
 
 static void shutdown() {
@@ -389,14 +400,14 @@ static void loop(GLFWwindow *window) {
 	running = true;
 	//if (!ctx->gamePadDef) searchGamePad(ctx);
 	//ctx->gamePadSearchCount = 0;
+#ifdef __EMSCRIPTEN__
+	emscripten_set_main_loop(idle, 0, true);
+#else
 	while (running && !glfwWindowShouldClose(window))
 	{
-		idle(window);
+		idle();
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
-
-		/* Poll for and process events */
-		glfwPollEvents();
 
 /*		if (!ctx->gamePadDef) {
 			// No gamepad, check for one every now and then...
@@ -406,7 +417,7 @@ static void loop(GLFWwindow *window) {
 			} else ctx->gamePadSearchCount++;
 		}*/
 	}
-
+#endif
 	/*if (ctx->reset) {
 		_setFullscreen();
 		ctx->reset = false;
@@ -478,27 +489,34 @@ static void handler(int sig) {
 }
 
 void parseCommandLine(int argc, char *argv[]) {
+#ifdef __EMSCRIPTEN__
+	Settings::i()->setAssetDir("/assets/");
+	Settings::i()->setShaderDir("/assets/shaders/es_2.0/");
+#else
 	int zlen = strlen(argv[0]);
 	int i;
 	for (i = zlen - 1; i > 0; i--) {
 		if (argv[0][i] == '/') break;
 	}
+	std::string baseDir;
 	if (i == 0) {  // In case it is run with no path...
-		assetDir = (char *)malloc(sizeof(char) * 11);
-		assetDir[0] = '.'; assetDir[1] = '.'; assetDir[2] = '/';
-		assetDir[3]='a'; assetDir[4]='s'; assetDir[5]='s'; assetDir[6]='e';
-		assetDir[7]='t'; assetDir[8]='s'; assetDir[9]='/';
-		assetDir[10] = 0;
+		baseDir = "../";
 	} else {
-		assetDir = (char *)malloc(sizeof(char) * (i + 12));
-		memcpy(assetDir, argv[0], i+1);
-		assetDir[i+1]='.'; assetDir[i+2]='.'; assetDir[i+3]='/';
-		assetDir[i+4]='a'; assetDir[i+5]='s'; assetDir[i+6]='s'; assetDir[i+7]='e';
-		assetDir[i+8]='t'; assetDir[i+9]='s'; assetDir[i+10]='/';
-		assetDir[i+11] = 0;
+		baseDir = argv[0];
+		baseDir.resize(i+1);
+		baseDir += "../";
 	}
+#ifdef _P_POSIX
+	char *fullpath = realpath(baseDir.c_str(), nullptr);
+	if (fullpath) {
+		baseDir = fullpath+std::string("/");
+		free(fullpath);
+	}
+#endif
+	std::string assetDir = baseDir+"assets/";
 	Settings::i()->setAssetDir(assetDir);
-	free(assetDir);
+	Settings::i()->setShaderDir(assetDir+"shaders/330_core/");
+#endif
 }
 
 int main(int argc, char *argv[]) {

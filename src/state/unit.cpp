@@ -25,6 +25,7 @@ freely, subject to the following restrictions:
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+#include <array>
 
 namespace hexgame {
 namespace state {

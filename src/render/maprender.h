@@ -31,7 +31,8 @@ namespace hexgame { namespace render {
 
 class MapRenderer {
 public:
-	MapRenderer(state::Map::s_ptr map, int width, int height, std::string assetDir);
+	MapRenderer(state::Map::s_ptr map, int width, int height,
+	            std::string assetDir, std::string shaderDir);
 	~MapRenderer();
 
 	void resizeMap(int width, int height);

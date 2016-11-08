@@ -22,7 +22,7 @@ freely, subject to the following restrictions:
 */
 #include "maprender.h"
 #include "shaders.h"
-#include "pc/GL/glew.h"
+#include "GL/glew.h"
 #include "imageutils.h"
 #include "gl_util.h"
 
@@ -365,7 +365,8 @@ struct MapRenderer::CTX {
 
 };
 
-MapRenderer::MapRenderer(state::Map::s_ptr map, int width, int height, std::string assetDir) {
+MapRenderer::MapRenderer(state::Map::s_ptr map, int width, int height,
+                         std::string assetDir, std::string shaderDir) {
 	_ctx = std::make_unique<CTX>();
 	_ctx->zoomLevel = 1;
 	_ctx->mapScale = zoomLevels[_ctx->zoomLevel];
@@ -373,8 +374,8 @@ MapRenderer::MapRenderer(state::Map::s_ptr map, int width, int height, std::stri
 	_ctx->centerRow = map->row;
 	_ctx->centerCol = map->col;
 	_ctx->miniMapDirty = true;
-	_ctx->hexprog = LoadShadersFromFile(assetDir + "shaders/HexVertex.glsl",
-	                                  assetDir + "shaders/HexFragment.glsl");
+	_ctx->hexprog = LoadShadersFromFile(shaderDir + "HexVertex.glsl",
+	                                  shaderDir + "HexFragment.glsl");
 	_ctx->heightFactor = glGetUniformLocation(_ctx->hexprog->id(), "heightFactor");
 	_ctx->widthFactor = glGetUniformLocation(_ctx->hexprog->id(), "widthFactor");
 	_ctx->centerId = glGetUniformLocation(_ctx->hexprog->id(), "center");
@@ -383,15 +384,15 @@ MapRenderer::MapRenderer(state::Map::s_ptr map, int width, int height, std::stri
 	_ctx->borderColor = glGetUniformLocation(_ctx->hexprog->id(), "borderColor");
 	_ctx->borderThickness = glGetUniformLocation(_ctx->hexprog->id(), "borderThickness");
 
-	_ctx->hexminiprog = LoadShadersFromFile(assetDir + "shaders/HexMiniVertex.glsl",
-	                                      assetDir + "shaders/HexMiniFragment.glsl");
+	_ctx->hexminiprog = LoadShadersFromFile(shaderDir + "HexMiniVertex.glsl",
+	                                      shaderDir + "HexMiniFragment.glsl");
 	_ctx->mini_heightFactor = glGetUniformLocation(_ctx->hexminiprog->id(), "heightFactor");
 	_ctx->mini_widthFactor = glGetUniformLocation(_ctx->hexminiprog->id(), "widthFactor");
 	_ctx->mini_centerId = glGetUniformLocation(_ctx->hexminiprog->id(), "center");
 	_ctx->mini_colorId = glGetUniformLocation(_ctx->hexminiprog->id(), "tileColor");
 
-	_ctx->minilocprog = LoadShadersFromFile(assetDir + "shaders/MiniLocVertex.glsl",
-	                                      assetDir + "shaders/MiniLocFragment.glsl");
+	_ctx->minilocprog = LoadShadersFromFile(shaderDir + "MiniLocVertex.glsl",
+	                                      shaderDir + "MiniLocFragment.glsl");
 	_ctx->miniloc_heightFactor = glGetUniformLocation(_ctx->minilocprog->id(), "heightFactor");
 	_ctx->miniloc_widthFactor = glGetUniformLocation(_ctx->minilocprog->id(), "widthFactor");
 	_ctx->miniloc_centerhFactor = glGetUniformLocation(_ctx->minilocprog->id(), "centerhFactor");
@@ -399,13 +400,13 @@ MapRenderer::MapRenderer(state::Map::s_ptr map, int width, int height, std::stri
 	_ctx->miniloc_centerId = glGetUniformLocation(_ctx->minilocprog->id(), "center");
 	_ctx->miniloc_colorId = glGetUniformLocation(_ctx->minilocprog->id(), "tileColor");
 
-	_ctx->hexoverlayprog = LoadShadersFromFile(assetDir + "shaders/HexOverlayVertex.glsl",
-	                                         assetDir + "shaders/HexOverlayFragment.glsl");
+	_ctx->hexoverlayprog = LoadShadersFromFile(shaderDir + "HexOverlayVertex.glsl",
+	                                         shaderDir + "HexOverlayFragment.glsl");
 	_ctx->hexOverlayHeightFactor = glGetUniformLocation(_ctx->hexoverlayprog->id(), "heightFactor");
 	_ctx->hexOverlayWidthFactor = glGetUniformLocation(_ctx->hexoverlayprog->id(), "widthFactor");
 	_ctx->hexOverlayCenterId = glGetUniformLocation(_ctx->hexoverlayprog->id(), "center");
-	_ctx->texpassprog = LoadShadersFromFile(assetDir + "shaders/TexPassVertex.glsl",
-	                                      assetDir + "shaders/TexPassFragment.glsl");
+	_ctx->texpassprog = LoadShadersFromFile(shaderDir + "TexPassVertex.glsl",
+	                                      shaderDir + "TexPassFragment.glsl");
 	_ctx->texpass_textureID0 = glGetUniformLocation(_ctx->texpassprog->id(), "Texture0");
 
 	glGenVertexArrays(1, &_ctx->vertexArrayID);

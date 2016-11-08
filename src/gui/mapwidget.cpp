@@ -9,7 +9,8 @@ namespace gui {
 MapWidget::MapWidget() {
 	map = Application::instance()->getMap();
 	tb::TBRect r = GetRect();
-	maprenderer = std::make_unique<render::MapRenderer>(map, r.w, r.h, Settings::i()->getAssetDir());
+	maprenderer = std::make_unique<render::MapRenderer>(map, r.w, r.h,
+	           Settings::i()->getAssetDir(), Settings::i()->getShaderDir());
 }
 
 MapWidget::~MapWidget() {

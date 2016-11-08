@@ -1,4 +1,4 @@
-#include "render/pc/GL/glew.h"
+#include "GL/glew.h"
 
 #include <string>
 #include <iostream>
@@ -28,8 +28,8 @@ inline std::string codeToString(GLenum code)
 		case GL_INVALID_FRAMEBUFFER_OPERATION:
 			return "GL_INVALID_FRAMEBUFFER_OPERATION";
 			// Given when doing anything that would attempt to read from or write/render to a framebuffer that is not complete.
-		case GL_CONTEXT_LOST:
-			return "GL_CONTEXT_LOST";
+		//XXX case GL_CONTEXT_LOST:
+			//return "GL_CONTEXT_LOST";
 			// Given if the OpenGL context has been lost, due to a graphics card reset.
 		//case GL_TABLE_TOO_LARGE1:
 			//Part of the ARB_imaging extension.
@@ -49,6 +49,7 @@ inline void doGLError(std::string root) {
 	if ((err = glGetError()) != GL_NO_ERROR) {
 		std::stringstream ss;
 		ss << ", Code: " << std::hex << err << ", " << codeToString(err);
+		std::cout << ss.str() << std::endl;
 		throw std::invalid_argument("GL Error "+root+" "+ss.str());
 	}
 }

@@ -9,7 +9,7 @@ namespace gui {
 MiniMapWidget::MiniMapWidget() {
 	map = Application::instance()->getMap();
 	tb::TBRect r = GetRect();
-	minimaprenderer = std::make_unique<render::MiniMapRenderer>(map, r.w, r.h, Settings::i()->getAssetDir());
+	minimaprenderer = std::make_unique<render::MiniMapRenderer>(map, r.w, r.h, Settings::i()->getShaderDir());
 }
 
 MiniMapWidget::~MiniMapWidget() {

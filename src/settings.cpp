@@ -16,6 +16,14 @@ const std::string &Settings::getAssetDir() const {
 	return assetDir;
 }
 
+void Settings::setShaderDir(std::string shaderDir) {
+	this->shaderDir = shaderDir;
+}
+
+const std::string &Settings::getShaderDir() const {
+	return shaderDir;
+}
+
 Settings::Settings() {
 }
 
