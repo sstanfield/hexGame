@@ -22,8 +22,7 @@ freely, subject to the following restrictions:
 */
 #include "shaders.h"
 #include "c_raii.h"
-#include "GL/glew.h"
-#include "render/gl_util.h"
+#include "gl_util.h"
 
 #include <sys/stat.h>
 #include <unordered_map>

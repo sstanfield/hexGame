@@ -22,7 +22,6 @@ freely, subject to the following restrictions:
 */
 #include "minimaprender.h"
 #include "shaders.h"
-#include "GL/glew.h"
 #include "gl_util.h"
 
 #include <stdlib.h>

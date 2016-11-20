@@ -22,8 +22,7 @@ freely, subject to the following restrictions:
 */
 #include "Application.h"
 #include "render/shaders.h"
-//#include "render/pc/GL/glew.h"
-#include "GL/glew.h"
+#include "render/gl_util.h"
 #include "render/imageutils.h"
 #include "render/maprender.h"
 #include "util/string.h"
@@ -464,6 +463,7 @@ static GLFWwindow *openWindow(int width, int height,
 	/* Make the window's context current */
 	glfwMakeContextCurrent(window);
 
+#ifndef _P_OSX
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
@@ -480,6 +480,7 @@ static GLFWwindow *openWindow(int width, int height,
 		//std::cout << "GL Error init 1- "<<std::hex<<err2<<"\n";
 	}
 	printf("Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
+#endif
 	//_dpi = getCurrentDPI();
 	return window;
 }

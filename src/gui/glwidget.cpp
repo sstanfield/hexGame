@@ -1,5 +1,5 @@
 #include "glwidget.h"
-#include "render/pc/GL/glew.h"
+#include "render/gl_util.h"
 
 namespace hexgame {
 namespace gui {

@@ -1,4 +1,8 @@
+#ifdef _P_OSX
+#include "OpenGL/gl3.h"
+#else
 #include "GL/glew.h"
+#endif
 
 #include <string>
 #include <iostream>
@@ -19,9 +23,6 @@ inline std::string codeToString(GLenum code)
 			return "GL_INVALID_OPERATION";
 			// Given when the set of state for a command is not legal for the parameters given to that command. It is also given for commands where combinations of parameters define what the legal parameters are.
 
-		case GL_STACK_UNDERFLOW:
-			return "GL_STACK_UNDERFLOW";
-			// Given when a stack popping operation cannot be done because the stack is already at its lowest point.
 		case GL_OUT_OF_MEMORY:
 			return "GL_OUT_OF_MEMORY";
 			// Given when performing an operation that can allocate memory, and the memory cannot be allocated. The results of OpenGL functions that return this error are undefined; it is allowable for partial operations to happen.

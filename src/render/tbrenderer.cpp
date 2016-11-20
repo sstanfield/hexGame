@@ -5,7 +5,6 @@
 
 #include "tbrenderer.h"
 
-#include "GL/glew.h"
 #include "glcapabilities.h"
 #include "gl_util.h"
 

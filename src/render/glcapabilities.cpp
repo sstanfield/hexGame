@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "glcapabilities.h"
-#include "GL/glew.h"
+#include "gl_util.h"
 
 using namespace hexgame;
 using namespace hexgame::render;

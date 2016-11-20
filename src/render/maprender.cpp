@@ -22,7 +22,6 @@ freely, subject to the following restrictions:
 */
 #include "maprender.h"
 #include "shaders.h"
-#include "GL/glew.h"
 #include "imageutils.h"
 #include "gl_util.h"
 
