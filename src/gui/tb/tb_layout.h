@@ -84,8 +84,8 @@ public:
 	TBLayout(AXIS axis = AXIS_X);
 
 	/** Set along which axis the content should be layouted */
-	virtual void SetAxis(AXIS axis);
-	virtual AXIS GetAxis() const { return m_axis; }
+	void SetAxis(AXIS axis) override;
+	AXIS GetAxis() const override { return m_axis; }
 
 	/** Set the spacing between widgets in this layout. Setting the default (SPACING_FROM_SKIN)
 		will make it use the spacing specified in the skin. */
@@ -120,19 +120,19 @@ public:
 		from bottom to top (default creation order). */
 	void SetLayoutOrder(LAYOUT_ORDER order);
 
-	virtual void InvalidateLayout(INVALIDATE_LAYOUT il);
+	void InvalidateLayout(INVALIDATE_LAYOUT il) override;
 
-	virtual PreferredSize OnCalculatePreferredContentSize(const SizeConstraints &constraints);
+	PreferredSize OnCalculatePreferredContentSize(const SizeConstraints &constraints) override;
 
-	virtual void OnInflate(const INFLATE_INFO &info);
-	virtual bool OnEvent(const TBWidgetEvent &ev);
-	virtual void OnPaintChildren(const PaintProps &paint_props);
-	virtual void OnProcess();
-	virtual void OnResized(int old_w, int old_h);
-	virtual void OnInflateChild(TBWidget *child);
-	virtual void GetChildTranslation(int &x, int &y) const;
-	virtual void ScrollTo(int x, int y);
-	virtual TBWidget::ScrollInfo GetScrollInfo();
+	void OnInflate(const INFLATE_INFO &info) override;
+	bool OnEvent(const TBWidgetEvent &ev) override;
+	void OnPaintChildren(const PaintProps &paint_props) override;
+	void OnProcess() override;
+	void OnResized(int old_w, int old_h) override;
+	void OnInflateChild(TBWidget *child) override;
+	void GetChildTranslation(int &x, int &y) const override;
+	void ScrollTo(int x, int y) override;
+	TBWidget::ScrollInfo GetScrollInfo() override;
 protected:
 	AXIS m_axis;
 	int m_spacing;

@@ -76,7 +76,7 @@ public:
 		GetWidgetByID(TBIDC("container"))->AddChild(label);
 	}
 
-	virtual bool OnEvent(const TBWidgetEvent &ev)
+	bool OnEvent(const TBWidgetEvent &ev) override
 	{
 		if (ev.type == EVENT_TYPE_CLICK && ev.target->GetID() == TBIDC("check"))
 		{
@@ -88,7 +88,7 @@ public:
 		return TBWindow::OnEvent(ev);
 	}
 
-	virtual void OnPaint(const PaintProps &paint_props)
+	void OnPaint(const PaintProps &paint_props) override
 	{
 		// Draw stuff to the right of the debug window
 		g_renderer->Translate(GetRect().w, 0);
@@ -123,7 +123,7 @@ public:
 	}
 
 	// TBWidgetListener
-	virtual bool OnWidgetInvokeEvent(TBWidget *widget, const TBWidgetEvent &ev)
+	bool OnWidgetInvokeEvent(TBWidget *widget, const TBWidgetEvent &ev) override
 	{
 		// Skip these events for now
 		if (ev.IsPointerEvent())

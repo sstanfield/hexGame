@@ -95,8 +95,8 @@ public:
 #endif
 
 	// Implementing TBRendererListener
-	virtual void OnContextLost();
-	virtual void OnContextRestored();
+	void OnContextLost() override;
+	void OnContextRestored() override;
 private:
 	TBBitmapFragmentManager m_frag_manager;
 	TBHashTableOf<TBImageRep> m_image_rep_hash;

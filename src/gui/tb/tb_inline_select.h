@@ -29,19 +29,19 @@ public:
 	~TBInlineSelect();
 
 	/** Set along which axis the content should layouted. */
-	virtual void SetAxis(AXIS axis) { m_layout.SetAxis(axis); }
-	virtual AXIS GetAxis() const { return m_layout.GetAxis(); }
+	void SetAxis(AXIS axis) override { m_layout.SetAxis(axis); }
+	AXIS GetAxis() const override { return m_layout.GetAxis(); }
 
 	void SetLimits(int min, int max);
 	int GetMinValue() const { return m_min; }
 	int GetMaxValue() const { return m_max; }
 
-	virtual void SetValue(int value) { SetValueInternal(value, true); }
-	virtual int GetValue() { return m_value; }
+	void SetValue(int value) override { SetValueInternal(value, true); }
+	int GetValue() override { return m_value; }
 
-	virtual void OnInflate(const INFLATE_INFO &info);
-	virtual void OnSkinChanged();
-	virtual bool OnEvent(const TBWidgetEvent &ev);
+	void OnInflate(const INFLATE_INFO &info) override;
+	void OnSkinChanged() override;
+	bool OnEvent(const TBWidgetEvent &ev) override;
 protected:
 	TBButton m_buttons[2];
 	TBLayout m_layout;

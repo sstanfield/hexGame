@@ -50,15 +50,15 @@ public:
 
 	bool Show(const char *title, const char *message, TBMessageWindowSettings *settings = nullptr);
 
-	virtual TBWidget *GetEventDestination() { return m_target.Get(); }
+	TBWidget *GetEventDestination() override { return m_target.Get(); }
 
-	virtual bool OnEvent(const TBWidgetEvent &ev);
-	virtual void OnDie();
+	bool OnEvent(const TBWidgetEvent &ev) override;
+	void OnDie() override;
 private:
 	void AddButton(TBID id, bool focused);
 	// TBWidgetListener
-	virtual void OnWidgetDelete(TBWidget *widget);
-	virtual bool OnWidgetDying(TBWidget *widget);
+	void OnWidgetDelete(TBWidget *widget) override;
+	bool OnWidgetDying(TBWidget *widget) override;
 	TBWidgetSafePointer m_dimmer;
 	TBWidgetSafePointer m_target;
 };

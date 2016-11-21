@@ -53,8 +53,8 @@ public:
 
 	/** The value is the selected item. In lists with multiple selectable
 		items it's the item that is the current focus. */
-	virtual void SetValue(int value);
-	virtual int GetValue() { return m_value; }
+	void SetValue(int value) override;
+	int GetValue() override { return m_value; }
 
 	/** Get the ID of the selected item, or 0 if there is no item selected. */
 	TBID GetSelectedItemID();
@@ -80,18 +80,18 @@ public:
 	/** Return the scrollcontainer used in this list. */
 	TBScrollContainer *GetScrollContainer() { return &m_container; }
 
-	virtual void OnInflate(const INFLATE_INFO &info);
-	virtual void OnSkinChanged();
-	virtual void OnProcess();
-	virtual void OnProcessAfterChildren();
-	virtual bool OnEvent(const TBWidgetEvent &ev);
+	void OnInflate(const INFLATE_INFO &info) override;
+	void OnSkinChanged() override;
+	void OnProcess() override;
+	void OnProcessAfterChildren() override;
+	bool OnEvent(const TBWidgetEvent &ev) override;
 
 	// == TBSelectItemViewer ==================================================
-	virtual void OnSourceChanged();
-	virtual void OnItemChanged(int index);
-	virtual void OnItemAdded(int index);
-	virtual void OnItemRemoved(int index);
-	virtual void OnAllItemsRemoved();
+	void OnSourceChanged() override;
+	void OnItemChanged(int index) override;
+	void OnItemAdded(int index) override;
+	void OnItemRemoved(int index) override;
+	void OnAllItemsRemoved() override;
 protected:
 	TBScrollContainer m_container;
 	TBLayout m_layout;
@@ -127,8 +127,8 @@ public:
 	TBGenericStringItemSource *GetDefaultSource() { return &m_default_source; }
 
 	/** Set the selected item. */
-	virtual void SetValue(int value);
-	virtual int GetValue() { return m_value; }
+	void SetValue(int value) override;
+	int GetValue() override { return m_value; }
 
 	/** Get the ID of the selected item, or 0 if there is no item selected. */
 	TBID GetSelectedItemID();
@@ -142,15 +142,15 @@ public:
 	/** Return the menu window if it's open, or nullptr. */
 	TBMenuWindow *GetMenuIfOpen() const;
 
-	virtual void OnInflate(const INFLATE_INFO &info);
-	virtual bool OnEvent(const TBWidgetEvent &ev);
+	void OnInflate(const INFLATE_INFO &info) override;
+	bool OnEvent(const TBWidgetEvent &ev) override;
 
 	// == TBSelectItemViewer ==================================================
-	virtual void OnSourceChanged();
-	virtual void OnItemChanged(int index);
-	virtual void OnItemAdded(int index) {}
-	virtual void OnItemRemoved(int index) {}
-	virtual void OnAllItemsRemoved() {}
+	void OnSourceChanged() override;
+	void OnItemChanged(int index) override;
+	void OnItemAdded(int index) override {}
+	void OnItemRemoved(int index) override {}
+	void OnAllItemsRemoved() override {}
 protected:
 	TBGenericStringItemSource m_default_source;
 	TBSkinImage m_arrow;

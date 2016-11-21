@@ -39,9 +39,9 @@ public:
 	TBOBJECT_SUBCLASS(TBWidgetAnimationOpacity, TBWidgetAnimationObject);
 
 	TBWidgetAnimationOpacity(TBWidget *widget, float src_opacity, float dst_opacity, bool die);
-	virtual void OnAnimationStart();
-	virtual void OnAnimationUpdate(float progress);
-	virtual void OnAnimationStop(bool aborted);
+	void OnAnimationStart() override;
+	void OnAnimationUpdate(float progress) override;
+	void OnAnimationStop(bool aborted) override;
 private:
 	float m_src_opacity;
 	float m_dst_opacity;
@@ -69,9 +69,9 @@ public:
 		rectangle and a delta. The reference rectangle will be taken from
 		the target widget on the first OnAnimationUpdate. */
 	TBWidgetAnimationRect(TBWidget *widget, const TBRect &delta_rect, MODE mode);
-	virtual void OnAnimationStart();
-	virtual void OnAnimationUpdate(float progress);
-	virtual void OnAnimationStop(bool aborted);
+	void OnAnimationStart() override;
+	void OnAnimationUpdate(float progress) override;
+	void OnAnimationStop(bool aborted) override;
 private:
 	TBRect m_src_rect;
 	TBRect m_dst_rect;
@@ -98,10 +98,10 @@ public:
 
 private:
 	// == TBWidgetListener ==================
-	virtual void OnWidgetDelete(TBWidget *widget);
-	virtual bool OnWidgetDying(TBWidget *widget);
-	virtual void OnWidgetAdded(TBWidget *parent, TBWidget *child);
-	virtual void OnWidgetRemove(TBWidget *parent, TBWidget *child);
+	void OnWidgetDelete(TBWidget *widget) override;
+	bool OnWidgetDying(TBWidget *widget) override;
+	void OnWidgetAdded(TBWidget *parent, TBWidget *child) override;
+	void OnWidgetRemove(TBWidget *parent, TBWidget *child) override;
 };
 
 } // namespace tb
