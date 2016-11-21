@@ -119,7 +119,7 @@ void MapWidget::initGL() {
 }
 
 void MapWidget::render() {
-	maprenderer->renderMap(false);  // Main map.
+	maprenderer->renderMap();  // Main map.
 }
 
 void MapWidget::OnInflate(const tb::INFLATE_INFO &info) {

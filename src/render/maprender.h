@@ -36,8 +36,7 @@ public:
 	~MapRenderer();
 
 	void resizeMap(int width, int height);
-	void renderMap(bool mini);
-	void miniMapDirty();
+	void renderMap();
 	void getMapDisplayCenter(unsigned int& centerRow, unsigned int& centerCol,
 	                         unsigned int& rowsDisplayed, unsigned int& colsDisplayed);
 	void setMapDisplayCenter(int displayCenterRow, int displayCenterCol);
