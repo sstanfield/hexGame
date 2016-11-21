@@ -267,8 +267,10 @@ MiniMapRenderer::MiniMapRenderer(state::Map::s_ptr map, int width, int height, s
 	                                      assetDir + "TexPassFragment.glsl");
 	_ctx->texpass_textureID0 = glGetUniformLocation(_ctx->texpassprog->id(), "Texture0");
 
+#ifndef __EMSCRIPTEN__
 	glGenVertexArrays(1, &_ctx->vertexArrayID);
 	glBindVertexArray(_ctx->vertexArrayID);
+#endif
 
 	static const GLfloat square_vertex_buffer_data[] = {
 	   -1.0f,  1.0f,  0.1f,    // left top
@@ -487,7 +489,9 @@ MiniMapRenderer::~MiniMapRenderer() {
 	glDeleteBuffers(1, &_ctx->hexbottomleftvertexbuffer);
 	glDeleteBuffers(1, &_ctx->hexbottomleftuvbuffer);
 
+#ifndef __EMSCRIPTEN__
 	glDeleteVertexArrays(1, &_ctx->vertexArrayID);
+#endif
 
 	if (_ctx->miniMap) {
 		free(_ctx->miniMap);

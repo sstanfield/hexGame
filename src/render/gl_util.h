@@ -1,8 +1,13 @@
+#ifdef __EMSCRIPTEN__
+#include <GLES2/gl2.h>
+#include <EGL/egl.h>
+#else // __EMSCRIPTEN__
 #ifdef _P_OSX
 #include "OpenGL/gl3.h"
-#else
+#else // _P_OSX
 #include "GL/glew.h"
-#endif
+#endif // _P_OSX
+#endif // __ENSCRIPTEN__
 
 #include <string>
 #include <iostream>

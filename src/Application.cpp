@@ -85,7 +85,6 @@ Application::Application(std::unique_ptr<ServicesInterface> services, int width,
 	state::Unit *u1 = map->units.newUnit(state::Side::Side_Black, "Test Cav", 3, 5, 20, u1move);
 	map->placeUnit(u1, 50, 50);
 
-	printf("XXX call lua\n");
 	std::string layout = Settings::i()->getAssetDir()+"layouts/main.lua";
 	lua::HexLua lua;
 	lua.runScript(layout);

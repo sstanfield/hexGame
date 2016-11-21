@@ -14,6 +14,9 @@ MapWidget: id: main_map distribution: available, spacing: 5, allowSelect: 1, is-
 tb_addWidget("main_layout1", [[TBLayout: id: main_sidebar, axis: y, distribution: available, spacing: 5]]);
 
 tb_addWidget("main_sidebar", [[
-MiniMapWidget: id: mini_map distribution: available, spacing: 5, allowSelect: 1, is-focusable: 1
+MiniMapWidget: id: mini_map, distribution: available, spacing: 5, allowSelect: 1, is-focusable: 1
 	lp: width: ]]..(w-mw)..[[px, height: ]]..(h-mh)..[[px
+]]);
+tb_addWidget("main_sidebar", [[
+TBButton: id: button, text: SLS, spacing: 5, allowSelect: 1, is-focusable: 1
 ]]);

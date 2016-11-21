@@ -254,10 +254,18 @@ struct MapRenderer::CTX {
 			uvbuffer = hexbottomleftuvbuffer;
 		}
 
+		int aPos = 0, aTex = 1, aBarry = 2;
+#ifdef __EMSCRIPTEN__
+		aPos = glGetAttribLocation (hexprog->id(), "Position" );
+		if (!mini) {
+			aTex = glGetAttribLocation(hexprog->id(), "TexCoord" );
+			aBarry = glGetAttribLocation(hexprog->id(), "BarryCoord" );
+		}
+#endif
 		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(aPos);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+		glVertexAttribPointer(aPos,
 				3,                  // size
 				GL_FLOAT,            // type
 				GL_FALSE,           // normalized?
@@ -266,9 +274,9 @@ struct MapRenderer::CTX {
 	            );
 		if (!mini) {
 			// 2nd attribute buffer : texture coords
-			glEnableVertexAttribArray(1);
+			glEnableVertexAttribArray(aTex);
 			glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-			glVertexAttribPointer(1,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
+			glVertexAttribPointer(aTex,
 					2,                  // size
 					GL_FLOAT,           // type
 					GL_FALSE,           // normalized?
@@ -277,9 +285,9 @@ struct MapRenderer::CTX {
 		            );
 
 			// 3nd attribute buffer : used for borders
-			glEnableVertexAttribArray(2);
+			glEnableVertexAttribArray(aBarry);
 			glBindBuffer(GL_ARRAY_BUFFER, hexbarrybuffer);
-			glVertexAttribPointer(2,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
+			glVertexAttribPointer(aBarry,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
 					3,                  // size
 					GL_FLOAT,           // type
 					GL_FALSE,           // normalized?
@@ -309,10 +317,10 @@ struct MapRenderer::CTX {
 				glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, NULL);
 			}
 			if (depthTest) glEnable(GL_DEPTH_TEST);
-			glDisableVertexAttribArray(1);
-			glDisableVertexAttribArray(2);
+			glDisableVertexAttribArray(aTex);
+			glDisableVertexAttribArray(aBarry);
 		}
-		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(aPos);
 	}
 
 	void saveMiniMap() {
@@ -408,8 +416,10 @@ MapRenderer::MapRenderer(state::Map::s_ptr map, int width, int height,
 	                                      shaderDir + "TexPassFragment.glsl");
 	_ctx->texpass_textureID0 = glGetUniformLocation(_ctx->texpassprog->id(), "Texture0");
 
+#ifndef __EMSCRIPTEN__
 	glGenVertexArrays(1, &_ctx->vertexArrayID);
 	glBindVertexArray(_ctx->vertexArrayID);
+#endif
 
 	static const GLfloat square_vertex_buffer_data[] = {
 	   -1.0f,  1.0f,  0.1f,    // left top
@@ -657,7 +667,9 @@ MapRenderer::~MapRenderer() {
 	glDeleteTextures(1, &_ctx->swampTex);
 	glDeleteTextures(1, &_ctx->cityTex);
 
+#ifndef __EMSCRIPTEN__
 	glDeleteVertexArrays(1, &_ctx->vertexArrayID);
+#endif
 
 	if (_ctx->miniMap) {
 		free(_ctx->miniMap);

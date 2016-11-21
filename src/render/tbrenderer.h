@@ -56,6 +56,8 @@ public:
 private:
 	unsigned int mvp_handle;
 	unsigned int vertexbuffer;
+	// Shader attribute locations.
+	int aPos = 0, aTex = 1, aColor = 2;
 	Shader::s_ptr shader;
 	int m_render_target_w;
 	int m_render_target_h;

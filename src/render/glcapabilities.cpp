@@ -67,6 +67,8 @@ void GLCapabilities::setState(std::map<unsigned int, bool> &state) {
 
 GLCapabilities::GLCapabilities() {
 	caps[GL_DITHER] = true;
+#ifndef __EMSCRIPTEN__
 	caps[GL_MULTISAMPLE] = true;
+#endif
 }
 

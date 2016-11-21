@@ -60,7 +60,6 @@ bool TBBitmap::Init(int width, int height, tb::uint32 *data)
 	m_w = width;
 	m_h = height;
 
-	doGLError("TBBitmap::Init 1");
 	glGenTextures(1, &m_texture);
 	BindBitmap(this);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -110,9 +109,9 @@ void TBRenderer::BeginPaint(int render_target_w, int render_target_h)
 void TBRenderer::EndPaint()
 {
 	tb::TBRendererBatcher::EndPaint();
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(2);
+	glDisableVertexAttribArray(aPos);
+	glDisableVertexAttribArray(aTex);
+	glDisableVertexAttribArray(aColor);
 	doGLError("TBRenderer::EndPaint");
 }
 
@@ -150,9 +149,9 @@ void TBRenderer::OnContextRestored() {
 
 void TBRenderer::BeginNativeRender() {
 	FlushAllInternal();  // Do this so native gl widgets render "over" the background.
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(2);
+	glDisableVertexAttribArray(aPos);
+	glDisableVertexAttribArray(aTex);
+	glDisableVertexAttribArray(aColor);
 	doGLError("TBRenderer::BeginNativeRender");
 }
 
@@ -174,39 +173,46 @@ void TBRenderer::Setup(int render_target_w, int render_target_h)
 	GLCapabilities::i()->enable(GL_SCISSOR_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+#ifndef __EMSCRIPTEN__
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
+#endif
 	
-	glEnableVertexAttribArray(0);
+	glUseProgram(shader->id());
+#ifdef __EMSCRIPTEN__
+	aPos = glGetAttribLocation (shader->id(), "Position" );
+	aTex = glGetAttribLocation(shader->id(), "TexCoord" );
+	aColor = glGetAttribLocation(shader->id(), "Color" );
+#endif
+	glEnableVertexAttribArray(aPos);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	glVertexAttribPointer(
-	      0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+	      aPos,
 	      2,                  // size
 	      GL_FLOAT,           // type
 	      GL_FALSE,           // normalized?
 	      sizeof(Vertex),     // stride
 	      (void*)0            // array buffer offset
 	);
-	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(aTex);
 	glVertexAttribPointer(
-	      1,                  // attribute 1. No particular reason for 0, but must match the layout in the shader.
+	      aTex,
 	      2,                  // size
 	      GL_FLOAT,           // type
 	      GL_FALSE,           // normalized?
 	      sizeof(Vertex),     // stride
 	      (void*)8            // array buffer offset
 	);
-	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(aColor);
 	glVertexAttribPointer(
-	      2,                  // attribute 2. No particular reason for 0, but must match the layout in the shader.
+	      aColor,
 	      4,                  // size
 	      GL_UNSIGNED_BYTE,   // type
 	      GL_TRUE,            // normalized?
 	      sizeof(Vertex),     // stride
 	      (void*)16           // array buffer offset
 	);
-	glUseProgram(shader->id());
 	glUniformMatrix4fv(mvp_handle, 1, GL_FALSE, &mvp[0][0]);
 	doGLError("TBRenderer::Setup");
 }

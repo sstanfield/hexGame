@@ -26,6 +26,9 @@ freely, subject to the following restrictions:
 #include "render/imageutils.h"
 #include "render/maprender.h"
 #include "util/string.h"
+#ifdef __EMSCRIPTEN__
+#define GLFW_INCLUDE_ES2
+#endif
 #include "GLFW/glfw3.h"
 #include "tb_widgets.h"
 #include "settings.h"
@@ -94,9 +97,6 @@ static void init(GLFWwindow *window) {
 	// Enable blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-	printf("XXX w: %d h: %d\n", width, height);
 }
 
 static void render(GLFWwindow *window) {
@@ -463,6 +463,7 @@ static GLFWwindow *openWindow(int width, int height,
 	/* Make the window's context current */
 	glfwMakeContextCurrent(window);
 
+#ifndef __EMSCRIPTEN__
 #ifndef _P_OSX
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
@@ -480,7 +481,8 @@ static GLFWwindow *openWindow(int width, int height,
 		//std::cout << "GL Error init 1- "<<std::hex<<err2<<"\n";
 	}
 	printf("Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
-#endif
+#endif // _P_OSX
+#endif // __EMSCRIPTEN__
 	//_dpi = getCurrentDPI();
 	return window;
 }
