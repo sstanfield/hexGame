@@ -123,18 +123,18 @@ struct MapRenderer::CTX {
 
 
 	GLuint getTileTexture(state::TileType type) {
-		GLuint ret;
+		GLuint ret = grassTex;
 		switch (type) {
 			case state::TileType::Grass: ret = grassTex; break;
 			case state::TileType::Forest: ret = forestTex; break;
 			case state::TileType::Swamp: ret = swampTex; break;
-			            //	case state::TileType::Desert: ret = desertTex; break;
 			case state::TileType::Hill: ret = hillTex; break;
 			case state::TileType::Mountain: ret = mountainTex; break;
 			case state::TileType::Water: ret = waterTex; break;
-			            //	case state::TileType::Temple: ret = templeTex; break;
-			            //	case state::TileType::Ruin: ret = ruinTex; break;
 			case state::TileType::City: ret = cityTex; break;
+			case state::TileType::Temple: ret = cityTex; break; // XXX
+			case state::TileType::Ruin: ret = cityTex; break;   // XXX
+			case state::TileType::Desert: ret = cityTex; break; // XXX
 		}
 		return ret;
 	}
@@ -204,7 +204,6 @@ struct MapRenderer::CTX {
 		aTex = glGetAttribLocation(hexprog->id(), "TexCoord" );
 		aBarry = glGetAttribLocation(hexprog->id(), "BarryCoord" );
 #endif
-		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(aPos);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 		glVertexAttribPointer(aPos,
@@ -250,12 +249,26 @@ struct MapRenderer::CTX {
 			glUniform1f(hexOverlayHeightFactor, maphfactor);
 			glUniform1f(hexOverlayWidthFactor, mapwfactor);
 			glUniform2fv(hexOverlayCenterId, 1, center);
+#ifdef __EMSCRIPTEN__
+			glDisableVertexAttribArray(aPos);
+			aPos = glGetAttribLocation (hexoverlayprog->id(), "Position" );
+			glEnableVertexAttribArray(aPos);
+			glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+			glVertexAttribPointer(aPos,
+					3,                  // size
+					GL_FLOAT,            // type
+					GL_FALSE,           // normalized?
+					0,                  // stride
+					(void*)0            // array buffer offset
+	            	);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hexidxbuffer);
+#endif
 			glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, NULL);
 		}
-		if (depthTest) glEnable(GL_DEPTH_TEST);
 		glDisableVertexAttribArray(aTex);
 		glDisableVertexAttribArray(aBarry);
 		glDisableVertexAttribArray(aPos);
+		if (depthTest) glEnable(GL_DEPTH_TEST);
 	}
 
 };
@@ -544,7 +557,6 @@ MapRenderer::~MapRenderer() {
 }
 
 void MapRenderer::updateMapDimensions(int width, int height) {
-	state::Map *map = _ctx->map.get();
 	_ctx->width = width;
 	_ctx->height = height;
 

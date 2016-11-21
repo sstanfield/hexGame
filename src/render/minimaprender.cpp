@@ -172,10 +172,14 @@ struct MiniMapRenderer::CTX {
 			uvbuffer = hexbottomleftuvbuffer;
 		}
 
+		int aPos = 0;
+#ifdef __EMSCRIPTEN__
+		aPos = glGetAttribLocation (hexminiprog->id(), "Position" );
+#endif
 		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(aPos);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+		glVertexAttribPointer(aPos,
 				3,                  // size
 				GL_FLOAT,            // type
 				GL_FALSE,           // normalized?
@@ -186,7 +190,7 @@ struct MiniMapRenderer::CTX {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hexidxbuffer);
 		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, NULL);
 
-		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(aPos);
 	}
 
 	void saveMiniMap() {
@@ -223,10 +227,14 @@ struct MiniMapRenderer::CTX {
 		glUniform2fv(miniloc_centerId, 1, c2);
 		float markcolor[4] = {0.0, 0.0, 0.0, .3};
 		glUniform4fv(miniloc_colorId, 1, markcolor);
+		int aPos = 0;
+#ifdef __EMSCRIPTEN__
+		aPos = glGetAttribLocation (minilocprog->id(), "Position" );
+#endif
 		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(aPos);
 		glBindBuffer(GL_ARRAY_BUFFER, squarevertexbuffer);
-		glVertexAttribPointer(0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+		glVertexAttribPointer(aPos,
 				3,                  // size
 				GL_FLOAT,           // type
 				GL_FALSE,           // normalized?
@@ -235,7 +243,7 @@ struct MiniMapRenderer::CTX {
 	            );
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, squareidxbuffer);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
-		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(aPos);
 	}
 
 };
@@ -557,18 +565,23 @@ void MiniMapRenderer::renderMap() {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, _ctx->miniMapTexture);
 		glUniform1i(_ctx->texpass_textureID0, 0);
-		glEnableVertexAttribArray(0);
+		int aPos = 0, aTex = 1;
+#ifdef __EMSCRIPTEN__
+		aPos = glGetAttribLocation (_ctx->texpassprog->id(), "Position" );
+		aTex = glGetAttribLocation(_ctx->texpassprog->id(), "TexCoord" );
+#endif
+		glEnableVertexAttribArray(aPos);
 		glBindBuffer(GL_ARRAY_BUFFER, _ctx->squarevertexbuffer);
-		glVertexAttribPointer(0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+		glVertexAttribPointer(aPos,
 				3,                  // size
 				GL_FLOAT,           // type
 				GL_FALSE,           // normalized?
 				0,                  // stride
 				(void*)0            // array buffer offset
 			    );
-		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(aTex);
 		glBindBuffer(GL_ARRAY_BUFFER, _ctx->squareuvbuffer);
-		glVertexAttribPointer(1,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
+		glVertexAttribPointer(aTex,
 				2,                  // size
 				GL_FLOAT,           // type
 				GL_FALSE,           // normalized?
@@ -577,8 +590,8 @@ void MiniMapRenderer::renderMap() {
 			    );
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ctx->squareidxbuffer);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(aPos);
+		glDisableVertexAttribArray(aTex);
 		if (depthTest) glEnable(GL_DEPTH_TEST);
 		_ctx->miniMapLocMarker();
 		return;
@@ -601,10 +614,13 @@ void MiniMapRenderer::renderMap() {
 	glUniform2fv(_ctx->mini_centerId, 1, c2);
 	float backcolor[4] = {0.0, 0.0, 0.0, 1.0};
 	glUniform4fv(_ctx->mini_colorId, 1, backcolor);
-	// 1rst attribute buffer : vertices
-	glEnableVertexAttribArray(0);
+	int aPos = 0;
+#ifdef __EMSCRIPTEN__
+	aPos = glGetAttribLocation (_ctx->hexminiprog->id(), "Position" );
+#endif
+	glEnableVertexAttribArray(aPos);
 	glBindBuffer(GL_ARRAY_BUFFER, _ctx->squarevertexbuffer);
-	glVertexAttribPointer(0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+	glVertexAttribPointer(aPos,
 	                      3,                  // size
 	                      GL_FLOAT,           // type
 	                      GL_FALSE,           // normalized?
@@ -613,7 +629,7 @@ void MiniMapRenderer::renderMap() {
 	                      );
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ctx->squareidxbuffer);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
-	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(aPos);
 
 	for (col = -halfX; col <= halfX; col++) {
 		c[0] = 1.5f * col;
