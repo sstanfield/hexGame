@@ -1577,7 +1577,7 @@ static void stbi__build_fast_ac(stbi__int16 *fast_ac, stbi__huffman *h)
             // magnitude code followed by receive_extend code
             int k = ((i << len) & ((1 << FAST_BITS) - 1)) >> (FAST_BITS - magbits);
             int m = 1 << (magbits - 1);
-            if (k < m) k += (-1 << magbits) + 1;
+            if (k < m) k += ((unsigned int)-1 << magbits) + 1;
             // if the result is small enough, we can fit it in fast_ac table
             if (k >= -128 && k <= 127)
                fast_ac[i] = (stbi__int16) ((k << 8) + (run << 4) + (len + magbits));
@@ -5118,7 +5118,7 @@ static stbi_uc *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int 
    unsigned char *tga_data;
    unsigned char *tga_palette = NULL;
    int i, j;
-   unsigned char raw_data[4];
+   unsigned char raw_data[4] = {0, 0, 0, 0};
    int RLE_count = 0;
    int RLE_repeating = 0;
    int read_next_pixel = 1;
