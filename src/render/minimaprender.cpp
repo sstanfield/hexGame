@@ -140,36 +140,28 @@ struct MiniMapRenderer::CTX {
 		glUniform4fv(mini_colorId, 1, color);
 
 		GLuint vertexbuffer = hexvertexbuffer;
-		GLuint uvbuffer = hexuvbuffer;
 		if (col == 0) {
 			vertexbuffer = hexleftvertexbuffer;
-			uvbuffer = hexleftuvbuffer;
 		}
 		if (col == (map->numCols() - 1)) {
 			vertexbuffer = hexrightvertexbuffer;
-			uvbuffer = hexrightuvbuffer;
 		}
 		if (row == 0 && (col % 2)) {
 			if (col == (map->numCols() - 1)) {
 				vertexbuffer = hextoprightvertexbuffer;
-				uvbuffer = hextoprightuvbuffer;
 			} else {
 				vertexbuffer = hextopvertexbuffer;
-				uvbuffer = hextopuvbuffer;
 			}
 		}
 		if (row == (map->numRows() - 1) && !(col % 2)) {
 			if (col == (map->numCols() - 1)) {
 				vertexbuffer = hexbottomrightvertexbuffer;
-				uvbuffer = hexbottomrightuvbuffer;
 			} else {
 				vertexbuffer = hexbottomvertexbuffer;
-				uvbuffer = hexbottomuvbuffer;
 			}
 		}
 		if (row == (map->numRows() - 1) && col == 0) {
 			vertexbuffer = hexbottomleftvertexbuffer;
-			uvbuffer = hexbottomleftuvbuffer;
 		}
 
 		int aPos = 0;

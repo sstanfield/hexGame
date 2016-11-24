@@ -61,7 +61,6 @@ static void generate(Point *grid, int width, int height)
 	Point tmp;
 	Point g;
 	Point *p;
-	int idx = 0;
 	int y;
 	for (y = 0; y < height; y++)
 	{
@@ -164,7 +163,7 @@ void generateDistanceMap(unsigned char *out, const unsigned char *in,
 			      : 128 + 128 * dst / max;
 
 			float m = dst>255?255:dst;
-			unsigned char val = (unsigned char)m<0?0:m;
+			unsigned char val = (unsigned char)(m<0?0:m);
 			out[idx] = val;
 			idx++;
 		}

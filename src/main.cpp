@@ -47,9 +47,7 @@ freely, subject to the following restrictions:
 
 static bool running = true;
 
-static unsigned int turn = 1;
-
-static char *assetDir;
+//static unsigned int turn = 1;
 
 using namespace hexgame;
 
@@ -99,24 +97,6 @@ static void init(GLFWwindow *window) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-static void render(GLFWwindow *window) {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//	selectUnit(map, u1);
-	//renderMap(maprenderer, FALSE);  // Main map.
-	//renderMap(maprenderer, TRUE);   // Mini map.
-
-	/*if (map->selectedUnit) {
-		float red[] = {1, 0, 0, 1};
-		char str[100];
-		snprintf(str, 199, "%d", map->tiles[map->row][map->col].currentMoveCost);
-		float w, h;
-	}*/
-
-//	saveMiniMap(maprenderer);
-//	saveMiniMap(maprenderer);
-}
-
 static double lastFpsTime = -1;
 static void idle() {
 	if (!running) {
@@ -130,7 +110,6 @@ static void idle() {
 	//double renderStart = glfwGetTime();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	app->processFrame();
-	//render(window);
 	//double renderEnd = glfwGetTime();
 	//float renderTime = (float)( renderEnd - renderStart);
 

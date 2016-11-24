@@ -28,8 +28,22 @@ freely, subject to the following restrictions:
 #define STBI_NO_FAILURE_STRINGS
 #define STBI_NO_HDR
 #define STBI_ONLY_PNG
+
+// Disable unused function warnings for stb_image.h. Since STB_IMAGE_STATIC is
+// defined, it will contain a couple of unused static functions.
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#ifndef __clang__
+#pragma GCC diagnostic ignored "-Wmisleading-indentation"
+#endif
+#endif
+
 #include "gui/tb/thirdparty/stb_image.h"
 
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 //#include "gui/tb/tb_bitmap_fragment.h"
 

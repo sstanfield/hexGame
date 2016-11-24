@@ -53,6 +53,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 	add_definitions(-D_P_LINUX)
 	add_definitions(-D_P_POSIX)
+	add_definitions(-DLUA_USE_POSIX)
+
 	list(APPEND SOURCE_FILES src/render/pc/glew.c)
 	include_directories(src/render/pc)
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
