@@ -29,6 +29,9 @@ freely, subject to the following restrictions:
 #ifdef __EMSCRIPTEN__
 #define GLFW_INCLUDE_ES2
 #endif
+#ifdef __APPLE__
+#define GLFW_INCLUDE_GLCOREARB
+#endif
 #include "GLFW/glfw3.h"
 #include "tb_widgets.h"
 #include "settings.h"
