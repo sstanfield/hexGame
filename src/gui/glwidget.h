@@ -14,10 +14,10 @@ public:
 
 	GLWidget();
 	virtual ~GLWidget();
-	virtual void OnPaint(const PaintProps &paint_props);
+	void OnPaint(const PaintProps &paint_props) override;
 
-	virtual void OnContextLost() {}
-	virtual void OnContextRestored() { init = false; }
+	void OnContextLost() override {}
+	void OnContextRestored() override { init = false; }
 
 protected:
 	virtual void initGL() {}
