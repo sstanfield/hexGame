@@ -23,29 +23,8 @@ freely, subject to the following restrictions:
 #include "gl_util.h"
 #include "imageutils.h"
 
-#define STB_IMAGE_STATIC
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_NO_FAILURE_STRINGS
-#define STBI_NO_HDR
-#define STBI_ONLY_PNG
-
-// Disable unused function warnings for stb_image.h. Since STB_IMAGE_STATIC is
-// defined, it will contain a couple of unused static functions.
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#ifndef __clang__
-#pragma GCC diagnostic ignored "-Wmisleading-indentation"
-#endif
-#endif
-
+// Implementation in tb_image_loader_stb.cpp
 #include "gui/tb/thirdparty/stb_image.h"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
-
-//#include "gui/tb/tb_bitmap_fragment.h"
 
 #include <stdlib.h>
 
